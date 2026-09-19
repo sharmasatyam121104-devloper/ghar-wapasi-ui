@@ -46,6 +46,7 @@ function PublicDashboard() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Link to="/public/register-complaint" className="rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-brand-700 hover:bg-brand-50">Raise a Complaint</Link>
               <button type="button" onClick={() => notify('AI Photo Search')} className="rounded-lg border border-white/40 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/10">Search by Photo</button>
+              <button type="button" onClick={() => notify('Go to your portal')} className="rounded-lg border border-white/40 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/10">Go to Your Portal</button>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-1 md:gap-4">
