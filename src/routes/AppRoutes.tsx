@@ -1,4 +1,4 @@
-import { Navigate, useRoutes } from 'react-router-dom'
+import { useRoutes } from 'react-router-dom'
 import adminRoutes from './adminRoutes'
 import familyRoutes from './familyRoutes'
 import publicRoutes from './publicRoutes'
@@ -8,11 +8,18 @@ import AboutPage from '../pages/public/AboutPage'
 import GuidelinesPage from '../pages/public/GuidelinesPage'
 import ContactPage from '../pages/public/ContactPage'
 import PrivacyPage from '../pages/public/PrivacyPage'
+import LandingPage from '../pages/landing/LandingPage'
+import SignupPage from '../pages/auth/SignupPage'
+import LoginPage from '../pages/auth/LoginPage'
+import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage'
 import NotFoundPage from '../pages/NotFound/NotFoundPage'
 
 function AppRoutes() {
   return useRoutes([
-    { path: '/', element: <Navigate to="/public/dashboard" replace /> },
+    { path: '/', element: <LandingPage /> },
+    { path: '/signup', element: <SignupPage /> },
+    { path: '/login', element: <LoginPage /> },
+    { path: '/forgot-password', element: <ForgotPasswordPage /> },
     ...familyRoutes,
     ...policeRoutes,
     ...ngoRoutes,
