@@ -1,6 +1,5 @@
 import { useRoutes } from 'react-router-dom'
 import adminRoutes from './adminRoutes'
-import familyRoutes from './familyRoutes'
 import publicRoutes from './publicRoutes'
 import ngoRoutes from './ngoRoutes'
 import policeRoutes from './policeRoutes'
@@ -20,7 +19,6 @@ function AppRoutes() {
     { path: '/signup', element: <SignupPage /> },
     { path: '/login', element: <LoginPage /> },
     { path: '/forgot-password', element: <ForgotPasswordPage /> },
-    ...familyRoutes,
     ...policeRoutes,
     ...ngoRoutes,
     ...publicRoutes,

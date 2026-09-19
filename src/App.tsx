@@ -16,6 +16,7 @@ function ThemedToaster() {
   return <Toaster position="top-right" richColors theme={dark ? 'dark' : 'light'} />
 }
 
+
 function App() {
   return (
     <>

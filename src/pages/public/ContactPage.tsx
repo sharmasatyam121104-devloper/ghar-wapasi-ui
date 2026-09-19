@@ -11,7 +11,7 @@ const sections = [
   {
     heading: 'For Families',
     body: [
-      'If you need help with a complaint or want to check its status, log in to the Family portal and view your case, or call the helpline above.',
+      'If you need help with a complaint or want to check its status, log in and view your case under Your Complaints, or call the helpline above.',
     ],
   },
   {

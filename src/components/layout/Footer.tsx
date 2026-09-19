@@ -16,7 +16,6 @@ const linkGroups: FooterLinkGroup[] = [
     title: 'Portals',
     links: [
       { label: 'Public', to: '/public/dashboard' },
-      { label: 'Family', to: '/family/dashboard' },
       { label: 'Police', to: '/police/dashboard' },
       { label: 'NGO', to: '/ngo/dashboard' },
       { label: 'Admin', to: '/admin/dashboard' },
@@ -25,7 +24,7 @@ const linkGroups: FooterLinkGroup[] = [
   {
     title: 'Get Involved',
     links: [
-      { label: 'Raise a Complaint', to: '/public/dashboard' },
+      { label: 'Raise a Complaint', to: '/public/register-complaint' },
       { label: 'AI Photo Search', to: '/public/dashboard' },
       { label: 'Report a Sighting', to: '/public/dashboard' },
       { label: 'Volunteer With Us', to: '/ngo/dashboard' },

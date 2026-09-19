@@ -96,7 +96,7 @@ function SignupPage() {
 
       <main className="mx-auto flex w-full max-w-4xl flex-1 items-center px-5 py-10 sm:px-8">
         <div className="w-full overflow-hidden rounded-3xl border border-slate-200/70 bg-surface shadow-[0_18px_50px_-30px_rgba(30,41,59,0.4)] lg:grid lg:grid-cols-[1fr_1.1fr]">
-          <aside className="hidden flex-col justify-between bg-gradient-to-br from-brand-600 to-brand-700 p-8 text-white lg:flex xl:p-10 dark:from-[#0e1424] dark:to-[#080a12]">
+          <aside className="hidden flex-col justify-between bg-linear-to-br from-brand-600 to-brand-700 p-8 text-white lg:flex xl:p-10 dark:from-[#0e1424] dark:to-[#080a12]">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70">Join Ghar Wapasi</p>
               <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight">One account, for the whole community</h2>

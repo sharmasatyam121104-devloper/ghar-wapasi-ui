@@ -1,4 +1,7 @@
-﻿import { toast } from 'sonner'
+﻿import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
+import StatusBadge from '../../components/common/StatusBadge'
+import { complaintSteps, doneCountFor, getInitials, myComplaints } from '../../data/myComplaints'
 
 interface MissingReport {
   id: number
@@ -29,10 +32,6 @@ const reports: MissingReport[] = [
   { id: 4, name: 'Ram Singh', age: 45, gender: 'Male', lastSeen: 'Kashmere Gate Bus Stop', area: 'Delhi', status: 'Resolved', priority: 'normal' },
 ]
 
-function getInitials(name: string): string {
-  return name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()
-}
-
 function PublicDashboard() {
   const notify = (feature: string) => toast.success(`${feature} — Demo only. Full flow coming soon.`)
 
@@ -45,7 +44,7 @@ function PublicDashboard() {
             <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Help someone find their way home</h1>
             <p className="mt-4 max-w-xl text-sm leading-6 text-white/80">Report a missing person, search with a photo using AI, or share a sighting so families can reconnect — every alert reaches your community.</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <button type="button" onClick={() => notify('Raise a Complaint')} className="rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-brand-700 hover:bg-brand-50">Raise a Complaint</button>
+              <Link to="/public/register-complaint" className="rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-brand-700 hover:bg-brand-50">Raise a Complaint</Link>
               <button type="button" onClick={() => notify('AI Photo Search')} className="rounded-lg border border-white/40 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/10">Search by Photo</button>
             </div>
           </div>
@@ -67,7 +66,7 @@ function PublicDashboard() {
           </span>
           <h2 className="mt-4 font-display text-lg font-bold text-slate-900">Report a Missing Person</h2>
           <p className="mt-2 flex-1 text-sm leading-6 text-slate-500">File a detailed complaint with photo and last seen location. A registered account is needed to track its status.</p>
-          <button type="button" onClick={() => notify('Missing Person Report')} className="mt-5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">Raise a Complaint</button>
+          <Link to="/public/register-complaint" className="mt-5 rounded-lg bg-brand-600 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-brand-700">Raise a Complaint</Link>
         </article>
         <article className="flex flex-col rounded-2xl border border-slate-200/80 bg-surface p-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
           <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:text-brand-300">
@@ -85,6 +84,63 @@ function PublicDashboard() {
           <p className="mt-2 flex-1 text-sm leading-6 text-slate-500">Spotted someone from a missing report? Share the photo and details so their family and nearby users can be notified.</p>
           <button type="button" onClick={() => notify('Sighting Report')} className="mt-5 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300">Submit Sighting</button>
         </article>
+      </section>
+
+      <section>
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="font-display text-xl font-extrabold tracking-tight text-slate-900">Your Complaints</h2>
+            <p className="mt-1 text-sm text-slate-500">Complaints registered from your account — track status and manage them here.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Link to="/public/my-complaints" className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300">View All Complaints</Link>
+            <Link to="/public/register-complaint" className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">Raise a New Complaint</Link>
+          </div>
+        </div>
+        <div className="grid gap-5 md:grid-cols-2">
+          {myComplaints.map((complaint) => {
+            const doneCount = doneCountFor(complaint.status)
+            return (
+              <article key={complaint.id} className="rounded-2xl border border-slate-200/80 bg-surface p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+                <div className="flex items-start gap-4">
+                  <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-100 font-display text-base font-extrabold text-brand-700 dark:text-brand-300">{getInitials(complaint.name)}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-display text-base font-bold text-slate-900">
+                        {complaint.name} <span className="text-xs font-semibold text-slate-400">({complaint.relation})</span>
+                      </h3>
+                      <StatusBadge status={complaint.status} />
+                    </div>
+                    <p className="mt-1 font-mono text-xs text-slate-400">{complaint.caseRef}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{complaint.latest}</p>
+                    <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1">
+                      {complaintSteps.map((step, index) => {
+                        const done = index < doneCount
+                        return (
+                          <span key={step} className="flex items-center gap-1.5">
+                            <span className={`h-2 w-2 rounded-full ${done ? 'bg-brand-500' : 'bg-slate-300'}`} />
+                            <span className={`text-xs font-semibold ${done ? 'text-slate-700' : 'text-slate-400'}`}>{step}</span>
+                          </span>
+                        )
+                      })}
+                    </div>
+                    <div className="mt-5 flex flex-wrap items-center gap-2">
+                      <Link to={`/public/my-complaints/${complaint.id}`} className="inline-flex items-center gap-1 text-xs font-bold text-brand-700 hover:gap-1.5 dark:text-brand-300">
+                        View Case
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
+                      </Link>
+                      <button type="button" onClick={() => notify('Case Update')} className="rounded-lg border border-slate-200 px-3.5 py-2 text-xs font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300">Update Case</button>
+                      {complaint.status !== 'Resolved' && (
+                        <button type="button" onClick={() => notify('Mark Resolved')} className="rounded-lg px-3.5 py-2 text-xs font-bold text-brand-700 hover:bg-brand-50 dark:text-brand-300 dark:hover:bg-brand-950/40">Mark as Resolved</button>
+                      )}
+                    </div>
+                    <p className="mt-3 text-xs text-slate-400">{complaint.updatedAt}</p>
+                  </div>
+                </div>
+              </article>
+            )
+          })}
+        </div>
       </section>
 
       <section className="rounded-2xl border border-amber-200/80 bg-amber-50 p-5 sm:p-6 dark:border-amber-400/30 dark:bg-amber-950/40">
