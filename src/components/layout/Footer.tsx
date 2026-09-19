@@ -44,7 +44,7 @@ const linkGroups: FooterLinkGroup[] = [
 
 function Footer() {
   return (
-    <footer className="border-t border-slate-200/80 bg-white/85 backdrop-blur">
+    <footer className="border-t border-slate-200/80 bg-surface">
       <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
           <div>
@@ -57,7 +57,7 @@ function Footer() {
               <ul className="mt-3 space-y-2">
                 {group.links.map((link) => (
                   <li key={link.label}>
-                    <Link to={link.to} className="text-sm text-slate-500 hover:text-brand-700">{link.label}</Link>
+                    <Link to={link.to} className="text-sm text-slate-500 hover:text-brand-700 dark:hover:text-brand-300">{link.label}</Link>
                   </li>
                 ))}
               </ul>

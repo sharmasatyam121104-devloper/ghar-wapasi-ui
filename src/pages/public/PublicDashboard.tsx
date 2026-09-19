@@ -1,4 +1,4 @@
-import { toast } from 'sonner'
+﻿import { toast } from 'sonner'
 
 interface MissingReport {
   id: number
@@ -38,7 +38,7 @@ function PublicDashboard() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-700 p-6 text-white shadow-[0_8px_24px_rgba(36,45,120,0.18)] sm:p-10">
+      <section className="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-700 p-6 text-white shadow-[0_8px_24px_rgba(36,45,120,0.18)] sm:p-10 dark:from-[#0e1424] dark:to-[#080a12] dark:shadow-none">
         <div className="mb-8 grid gap-6 md:grid-cols-[1.6fr_1fr] md:items-center">
           <div>
             <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em]">Community Help Network</span>
@@ -61,40 +61,40 @@ function PublicDashboard() {
       </section>
 
       <section className="grid gap-5 md:grid-cols-3">
-        <article className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600">
+        <article className="flex flex-col rounded-2xl border border-slate-200/80 bg-surface p-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:text-brand-300">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
           </span>
           <h2 className="mt-4 font-display text-lg font-bold text-slate-900">Report a Missing Person</h2>
           <p className="mt-2 flex-1 text-sm leading-6 text-slate-500">File a detailed complaint with photo and last seen location. A registered account is needed to track its status.</p>
           <button type="button" onClick={() => notify('Missing Person Report')} className="mt-5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">Raise a Complaint</button>
         </article>
-        <article className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600">
+        <article className="flex flex-col rounded-2xl border border-slate-200/80 bg-surface p-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:text-brand-300">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3M14.5 8.5a3.5 3.5 0 0 0-2.5-5.1" /></svg>
           </span>
           <h2 className="mt-4 font-display text-lg font-bold text-slate-900">AI Photo Search</h2>
           <p className="mt-2 flex-1 text-sm leading-6 text-slate-500">Upload a photo — AI finds where the person is and instantly alerts every registered user within a 6 km radius.</p>
-          <button type="button" onClick={() => notify('AI Photo Search')} className="mt-5 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700">Search by Photo</button>
+          <button type="button" onClick={() => notify('AI Photo Search')} className="mt-5 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300">Search by Photo</button>
         </article>
-        <article className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600">
+        <article className="flex flex-col rounded-2xl border border-slate-200/80 bg-surface p-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+          <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:text-brand-300">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M12 21s-7-4.6-9.5-9A5.5 5.5 0 0 1 12 6.5 5.5 5.5 0 0 1 21.5 12c-2.5 4.4-9.5 9-9.5 9Z" /></svg>
           </span>
           <h2 className="mt-4 font-display text-lg font-bold text-slate-900">Report a Sighting</h2>
           <p className="mt-2 flex-1 text-sm leading-6 text-slate-500">Spotted someone from a missing report? Share the photo and details so their family and nearby users can be notified.</p>
-          <button type="button" onClick={() => notify('Sighting Report')} className="mt-5 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700">Submit Sighting</button>
+          <button type="button" onClick={() => notify('Sighting Report')} className="mt-5 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300">Submit Sighting</button>
         </article>
       </section>
 
-      <section className="rounded-2xl border border-amber-200/80 bg-amber-50 p-5 sm:p-6">
+      <section className="rounded-2xl border border-amber-200/80 bg-amber-50 p-5 sm:p-6 dark:border-amber-400/30 dark:bg-amber-950/40">
         <div className="flex items-start gap-4">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-400/20 dark:text-amber-300">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
           </span>
           <div>
             <h2 className="font-display text-base font-bold text-slate-900">Priority Alerts</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">Cases involving a <span className="font-semibold text-amber-700">female, senior citizen, or child</span> are broadcast instantly to <span className="font-semibold text-amber-700">every registered user</span> within a 6 km radius of the last seen location.</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">Cases involving a <span className="font-semibold text-amber-700 dark:text-amber-300">female, senior citizen, or child</span> are broadcast instantly to <span className="font-semibold text-amber-700 dark:text-amber-300">every registered user</span> within a 6 km radius of the last seen location.</p>
           </div>
         </div>
       </section>
@@ -105,22 +105,22 @@ function PublicDashboard() {
             <h2 className="font-display text-xl font-extrabold tracking-tight text-slate-900">Recent Missing Reports</h2>
             <p className="mt-1 text-sm text-slate-500">Latest updates from families across the community.</p>
           </div>
-          <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700">{reports.length} Reports</span>
+          <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700 dark:text-brand-300">{reports.length} Reports</span>
         </div>
         <div className="grid gap-5 md:grid-cols-2">
           {reports.map((report) => (
-            <article key={report.id} className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+            <article key={report.id} className="rounded-2xl border border-slate-200/80 bg-surface p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
               <div className="flex items-start gap-4">
-                <span className={`grid h-14 w-14 shrink-0 place-items-center rounded-full ${report.priority === 'high' ? 'bg-amber-100 text-amber-700' : 'bg-brand-100 text-brand-700'}`}>
+                <span className={`grid h-14 w-14 shrink-0 place-items-center rounded-full ${report.priority === 'high' ? 'bg-amber-100 text-amber-700' : 'bg-brand-100 text-brand-700 dark:text-brand-300'}`}>
                   <span className="font-display text-base font-extrabold">{getInitials(report.name)}</span>
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-display text-base font-bold text-slate-900">{report.name}</h3>
                     {report.status === 'Active' ? (
-                      <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700">Active</span>
+                      <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">Active</span>
                     ) : (
-                      <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-bold text-brand-700">{report.status}</span>
+                      <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-bold text-brand-700 dark:text-brand-300">{report.status}</span>
                     )}
                   </div>
                   <p className="mt-1 text-sm font-semibold text-slate-700">{report.age} years · {report.gender}</p>
@@ -130,7 +130,7 @@ function PublicDashboard() {
                   </p>
                 </div>
                 {report.priority === 'high' && (
-                  <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800">Priority Alert</span>
+                  <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">Priority Alert</span>
                 )}
               </div>
             </article>

@@ -28,7 +28,7 @@ function Logo({ to = '/', variant = 'dark', size = 'md', showText = true, classN
       <img src="/logo.png" alt="Ghar Wapasi logo" className={`${imageSizes[size]} w-auto rounded-xl object-contain`} />
       {showText && (
         <span className={`font-display font-extrabold tracking-tight ${textSizes[size]}`}>
-          <span className={`font-serif font-semibold italic ${isLight ? 'text-white' : 'text-brand-600'}`}>Ghar</span>{' '}
+          <span className={`font-serif font-semibold italic ${isLight ? 'text-white' : 'text-brand-600 dark:text-brand-300'}`}>Ghar</span>{' '}
           <span className={isLight ? 'text-white' : 'text-slate-900'}>Wapasi</span>
         </span>
       )}

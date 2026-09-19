@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import Logo from '../../components/common/Logo'
+import ThemeToggle from '../../components/common/ThemeToggle'
 
 const OTP_LENGTH = 6
 
@@ -11,7 +12,7 @@ const benefits = [
   { title: 'Verified & private', description: 'Identity verified with Aadhaar and mobile. Your data stays safe.' },
 ]
 
-const inputBase = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pl-11 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
+const inputBase = 'w-full rounded-xl border border-slate-200 bg-surface px-4 py-3 pl-11 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
 
 function SignupPage() {
   const navigate = useNavigate()
@@ -83,16 +84,19 @@ function SignupPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
-      <header className="border-b border-slate-200/70 bg-white/85 backdrop-blur">
+      <header className="border-b border-slate-200/70 bg-surface">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
           <Logo />
-          <button type="button" onClick={() => navigate('/login')} className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-brand-50 hover:text-brand-700">Login</button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button type="button" onClick={() => navigate('/login')} className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-brand-50 hover:text-brand-700 dark:hover:text-brand-300">Login</button>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto flex w-full max-w-4xl flex-1 items-center px-5 py-10 sm:px-8">
-        <div className="w-full overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-[0_18px_50px_-30px_rgba(30,41,59,0.4)] lg:grid lg:grid-cols-[1fr_1.1fr]">
-          <aside className="hidden flex-col justify-between bg-gradient-to-br from-brand-600 to-brand-700 p-8 text-white lg:flex xl:p-10">
+        <div className="w-full overflow-hidden rounded-3xl border border-slate-200/70 bg-surface shadow-[0_18px_50px_-30px_rgba(30,41,59,0.4)] lg:grid lg:grid-cols-[1fr_1.1fr]">
+          <aside className="hidden flex-col justify-between bg-gradient-to-br from-brand-600 to-brand-700 p-8 text-white lg:flex xl:p-10 dark:from-[#0e1424] dark:to-[#080a12]">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70">Join Ghar Wapasi</p>
               <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight">One account, for the whole community</h2>
@@ -115,7 +119,7 @@ function SignupPage() {
 
           <div className="p-6 sm:p-10">
             <div className="mb-8 flex items-center justify-between">
-              <button type="button" onClick={goBack} className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-brand-700">
+              <button type="button" onClick={goBack} className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-brand-700 dark:hover:text-brand-300">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M19 12H5m6 6-6-6 6-6" /></svg>
                 Back
               </button>
@@ -193,14 +197,14 @@ function SignupPage() {
                   <span className="h-px flex-1 bg-slate-200" aria-hidden="true" />
                 </div>
 
-                <button type="button" onClick={verifyDigiLocker} className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-slate-200 px-6 py-3 text-sm font-bold text-slate-700 transition-colors hover:border-brand-400 hover:text-brand-700">
+                <button type="button" onClick={verifyDigiLocker} className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-slate-200 px-6 py-3 text-sm font-bold text-slate-700 transition-colors hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M7 10h4M7 13h7M16 15h2" /></svg>
                   Verify with DigiLocker
                 </button>
 
                 <p className="text-center text-xs leading-5 text-slate-400">
                   Already have an account?{' '}
-                  <button type="button" onClick={() => navigate('/login')} className="font-bold text-brand-700 hover:text-brand-800">Log in</button>
+                  <button type="button" onClick={() => navigate('/login')} className="font-bold text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">Log in</button>
                 </p>
               </form>
             ) : (
@@ -215,7 +219,7 @@ function SignupPage() {
                       maxLength={1}
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(index, e.key)}
-                      className="h-12 w-10 rounded-xl border border-slate-200 bg-white text-center font-display text-lg font-bold text-slate-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 sm:h-14 sm:w-12"
+                      className="h-12 w-10 rounded-xl border border-slate-200 bg-surface text-center font-display text-lg font-bold text-slate-900 outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-100 sm:h-14 sm:w-12"
                       aria-label={`OTP digit ${index + 1}`}
                     />
                   ))}
@@ -239,7 +243,7 @@ function SignupPage() {
 
                 <p className="mt-5 text-center text-xs text-slate-400">
                   Didn’t get the code?{' '}
-                  <button type="button" onClick={resendOtp} className="font-bold text-brand-700 hover:text-brand-800">Resend OTP</button>
+                  <button type="button" onClick={resendOtp} className="font-bold text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">Resend OTP</button>
                 </p>
               </div>
             )}

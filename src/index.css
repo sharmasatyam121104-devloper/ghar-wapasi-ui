@@ -1,33 +1,70 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,wght@1,500;1,600&family=Manrope:wght@600;700;800&display=swap');
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-display: 'Manrope', 'DM Sans', ui-sans-serif, system-ui, sans-serif;
   --font-serif: 'Fraunces', Georgia, 'Times New Roman', serif;
 
-  --color-brand-50: #eef2ff;
-  --color-brand-100: #e0e7ff;
-  --color-brand-200: #c7d2fe;
-  --color-brand-300: #a5b4fc;
-  --color-brand-400: #818cf8;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #4f46e5;
-  --color-brand-700: #4338ca;
-  --color-brand-800: #3730a3;
-  --color-brand-900: #312e81;
-  --color-brand-950: #1e1b4b;
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
+  --color-brand-950: #172554;
 
-  --color-canvas: #eef2ff;
+  --color-canvas: #f2f4f7;
+  --color-surface: #ffffff;
 }
 
 :root {
   font-family: 'DM Sans', sans-serif;
   color: #1e293b;
-  background: #eef2ff;
+  background: #f2f4f7;
+  color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+.dark {
+  color-scheme: dark;
+  color: #a8a8b0;
+  background: #09090b;
+  accent-color: #60a5fa;
+
+  --color-canvas: #09090b;
+  --color-surface: #101013;
+
+  --color-slate-50: #111114;
+  --color-slate-100: #16161a;
+  --color-slate-200: #202025;
+  --color-slate-300: #2e2e35;
+  --color-slate-400: #66666f;
+  --color-slate-500: #9b9ba4;
+  --color-slate-600: #b6b6bf;
+  --color-slate-700: #d4d4da;
+  --color-slate-800: #ececef;
+  --color-slate-900: #fafafa;
+
+  --color-brand-50: #11141d;
+  --color-brand-100: #161c29;
+  --color-brand-200: #1d2638;
+  --color-brand-300: #8bb0ff;
+  --color-brand-400: #6e9af8;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+}
+
+.dark * {
+  scrollbar-color: #26262c #09090b;
 }
 
 body {

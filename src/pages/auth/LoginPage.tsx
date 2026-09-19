@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import Logo from '../../components/common/Logo'
+import ThemeToggle from '../../components/common/ThemeToggle'
 
-const inputBase = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pl-11 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
+const inputBase = 'w-full rounded-xl border border-slate-200 bg-surface px-4 py-3 pl-11 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
 
 function LoginPage() {
   const navigate = useNavigate()
@@ -26,16 +27,19 @@ function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
-      <header className="border-b border-slate-200/70 bg-white/85 backdrop-blur">
+      <header className="border-b border-slate-200/70 bg-surface">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
           <Logo />
-          <button type="button" onClick={() => navigate('/signup')} className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-700">Sign Up</button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button type="button" onClick={() => navigate('/signup')} className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-700">Sign Up</button>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto flex w-full max-w-4xl flex-1 items-center px-5 py-10 sm:px-8">
-        <div className="w-full overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-[0_18px_50px_-30px_rgba(30,41,59,0.4)] lg:grid lg:grid-cols-[1fr_1.1fr]">
-          <aside className="hidden flex-col justify-between bg-gradient-to-br from-brand-600 to-brand-700 p-8 text-white lg:flex xl:p-10">
+        <div className="w-full overflow-hidden rounded-3xl border border-slate-200/70 bg-surface shadow-[0_18px_50px_-30px_rgba(30,41,59,0.4)] lg:grid lg:grid-cols-[1fr_1.1fr]">
+          <aside className="hidden flex-col justify-between bg-gradient-to-br from-brand-600 to-brand-700 p-8 text-white lg:flex xl:p-10 dark:from-[#0e1424] dark:to-[#080a12]">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70">Welcome back</p>
               <h2 className="mt-3 font-display text-2xl font-extrabold leading-tight">Log in to continue your journey</h2>
@@ -70,7 +74,7 @@ function LoginPage() {
 
           <div className="p-6 sm:p-10">
             <div className="mb-8">
-              <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-brand-700">
+              <button type="button" onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors hover:text-brand-700 dark:hover:text-brand-300">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M19 12H5m6 6-6-6 6-6" /></svg>
                 Back
               </button>
@@ -96,7 +100,7 @@ function LoginPage() {
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
                   <label htmlFor="login-password" className="block text-xs font-bold uppercase tracking-wide text-slate-600">Password</label>
-                  <button type="button" onClick={forgotPassword} className="text-xs font-bold text-brand-700 hover:text-brand-800">Forgot password?</button>
+                  <button type="button" onClick={forgotPassword} className="text-xs font-bold text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">Forgot password?</button>
                 </div>
                 <div className="relative">
                   <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
@@ -126,7 +130,7 @@ function LoginPage() {
 
               <p className="text-center text-sm text-slate-500">
                 New to Ghar Wapasi?{' '}
-                <button type="button" onClick={() => navigate('/signup')} className="font-bold text-brand-700 hover:text-brand-800">Create an account</button>
+                <button type="button" onClick={() => navigate('/signup')} className="font-bold text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">Create an account</button>
               </p>
             </form>
           </div>

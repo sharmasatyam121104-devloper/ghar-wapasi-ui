@@ -13,7 +13,7 @@ function PanelLayout({ panelName, panelDescription }: PanelLayoutProps) {
       <Header />
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-10 sm:px-8 sm:py-14">
         <div className="mb-10 max-w-2xl">
-          <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-brand-600">{panelName} Panel</p>
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-brand-600 dark:text-brand-300">{panelName} Panel</p>
           <p className="text-base leading-7 text-slate-500">{panelDescription}</p>
         </div>
         <Outlet />
