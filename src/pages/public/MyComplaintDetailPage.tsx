@@ -22,7 +22,17 @@ function Row({ label, value }: { label: string; value: string }) {
   )
 }
 
-function MyComplaintDetailPage() {
+interface MyComplaintDetailPageProps {
+  backTo?: string
+  backLabel?: string
+  newComplaintTo?: string
+}
+
+function MyComplaintDetailPage({
+  backTo = '/public/my-complaints',
+  backLabel = 'All Complaints',
+  newComplaintTo = '/public/register-complaint',
+}: MyComplaintDetailPageProps) {
   const { id } = useParams()
   const notify = (feature: string) => toast.success(`${feature} — Demo only. Full flow coming soon.`)
 
@@ -33,7 +43,7 @@ function MyComplaintDetailPage() {
       <section className="rounded-2xl border border-slate-200/80 bg-surface p-10 text-center shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-900">Case not found</h1>
         <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">We could not locate a complaint matching this reference.</p>
-        <Link to="/public/my-complaints" className="mt-6 inline-block rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700">Back to My Complaints</Link>
+        <Link to={backTo} className="mt-6 inline-block rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700">Back to My Complaints</Link>
       </section>
     )
   }
@@ -52,9 +62,9 @@ function MyComplaintDetailPage() {
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <Link to="/public/my-complaints" className="inline-flex items-center gap-1.5 text-sm font-bold text-brand-700 hover:text-brand-800 dark:text-brand-300">
+          <Link to={backTo} className="inline-flex items-center gap-1.5 text-sm font-bold text-brand-700 hover:text-brand-800 dark:text-brand-300">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" /></svg>
-            All Complaints
+            {backLabel}
           </Link>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{complaint.name}</h1>
@@ -62,7 +72,7 @@ function MyComplaintDetailPage() {
           </div>
           <p className="mt-1 font-mono text-sm text-slate-400">{complaint.caseRef} · {complaint.relation}</p>
         </div>
-        <Link to="/public/register-complaint" className="w-full rounded-lg bg-brand-600 px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-brand-700 sm:w-auto">Raise a New Complaint</Link>
+        <Link to={newComplaintTo} className="w-full rounded-lg bg-brand-600 px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-brand-700 sm:w-auto">Raise a New Complaint</Link>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">

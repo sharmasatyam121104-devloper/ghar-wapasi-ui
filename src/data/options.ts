@@ -1,5 +1,41 @@
 export const genderOptions = ['Female', 'Male', 'Other']
 
+export const policeRanks = [
+  'Constable',
+  'Head Constable',
+  'Assistant Sub-Inspector',
+  'Sub-Inspector',
+  'Inspector',
+  'Deputy Superintendent of Police',
+  'Additional Superintendent of Police',
+  'Superintendent of Police',
+]
+
+export const indianStates = [
+  'Andhra Pradesh',
+  'Assam',
+  'Bihar',
+  'Chhattisgarh',
+  'Delhi',
+  'Goa',
+  'Gujarat',
+  'Haryana',
+  'Himachal Pradesh',
+  'Jharkhand',
+  'Karnataka',
+  'Kerala',
+  'Madhya Pradesh',
+  'Maharashtra',
+  'Odisha',
+  'Punjab',
+  'Rajasthan',
+  'Tamil Nadu',
+  'Telangana',
+  'Uttar Pradesh',
+  'Uttarakhand',
+  'West Bengal',
+]
+
 export const relationOptions = ['Father', 'Mother', 'Brother', 'Sister', 'Son', 'Daughter', 'Spouse', 'Guardian', 'Relative', 'Friend', 'Other']
 
 export const indianLanguages = [
