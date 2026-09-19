@@ -9,15 +9,15 @@ interface LogoProps {
 }
 
 const imageSizes = {
-  sm: 'h-10',
-  md: 'h-12',
-  lg: 'h-14',
+  sm: 'h-8 sm:h-10',
+  md: 'h-9 sm:h-12',
+  lg: 'h-11 sm:h-14',
 }
 
 const textSizes = {
   sm: 'text-sm',
-  md: 'text-base',
-  lg: 'text-lg',
+  md: 'text-sm sm:text-base',
+  lg: 'text-base sm:text-lg',
 }
 
 function Logo({ to = '/', variant = 'dark', size = 'md', showText = true, className = '' }: LogoProps) {

@@ -22,13 +22,13 @@ function MyComplaintsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <span className="text-xs font-bold uppercase tracking-[0.16em] text-brand-700 dark:text-brand-300">Self-Service</span>
-          <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-slate-900">Your Complaints</h1>
+          <h1 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Your Complaints</h1>
           <p className="mt-2 text-sm leading-6 text-slate-500">All complaints registered from your account. Click any case to view its full details and timeline.</p>
         </div>
-        <Link to="/public/register-complaint" className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700">Raise a New Complaint</Link>
+        <Link to="/public/register-complaint" className="w-full rounded-lg bg-brand-600 px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-brand-700 sm:w-auto">Raise a New Complaint</Link>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {summary.map((item) => (
           <div key={item.label} className="rounded-2xl border border-slate-200/80 bg-surface p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
             <p className={`font-display text-2xl font-extrabold ${item.tone}`}>{item.value}</p>

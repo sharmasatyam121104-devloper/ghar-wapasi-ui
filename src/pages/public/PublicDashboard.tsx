@@ -48,11 +48,11 @@ function PublicDashboard() {
               <button type="button" onClick={() => notify('AI Photo Search')} className="rounded-lg border border-white/40 px-5 py-2.5 text-sm font-bold text-white hover:bg-white/10">Search by Photo</button>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3 md:grid-cols-1 md:gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-1 md:gap-4">
             {stats.map((stat) => (
-              <div key={stat.label} className="rounded-xl bg-white/10 p-4">
-                <p className="font-display text-2xl font-extrabold sm:text-3xl">{stat.value}</p>
-                <p className="mt-1 text-xs font-semibold text-white/70 sm:text-sm">{stat.label}</p>
+              <div key={stat.label} className="rounded-xl bg-white/10 p-3 sm:p-4">
+                <p className="font-display text-xl font-extrabold sm:text-2xl md:text-3xl">{stat.value}</p>
+                <p className="mt-1 text-[11px] font-semibold text-white/70 sm:text-sm">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -156,7 +156,7 @@ function PublicDashboard() {
       </section>
 
       <section>
-        <div className="mb-5 flex items-end justify-between">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="font-display text-xl font-extrabold tracking-tight text-slate-900">Recent Missing Reports</h2>
             <p className="mt-1 text-sm text-slate-500">Latest updates from families across the community.</p>

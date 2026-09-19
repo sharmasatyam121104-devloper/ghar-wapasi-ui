@@ -386,14 +386,34 @@ function RegisterComplaintPage() {
       personName: form.personName,
       age: Number(form.personAge) || 0,
       gender: form.personGender,
-      relation: form.complainantRelation,
-      lastSeen: form.lastSeenPlace,
-      area: form.lastSeenCity,
-      address: form.complainantAddress,
-      contact: `Family Helpline: +91 ${form.complainantMobile}`,
+      height: form.personHeight,
+      build: form.personBuild,
+      marks: form.personMarks,
       clothing: form.personClothing,
       medicalNotes: form.personMedical,
+      languages: form.personLanguages,
+      lastSeenDate: form.lastSeenDate,
+      lastSeenTime: form.lastSeenTime,
+      lastSeen: form.lastSeenPlace,
+      area: form.lastSeenCity,
+      locality: form.lastSeenArea,
+      circumstances: form.circumstances,
+      complainantName: form.complainantName,
+      complainantRelation: form.complainantRelation,
+      complainantAadhaar: form.complainantAadhaar,
+      complainantMobile: form.complainantMobile,
+      complainantAddress: form.complainantAddress,
+      memberName: form.memberName,
+      memberRelation: form.memberRelation,
+      memberAadhaar: form.memberAadhaar,
+      memberMobile: form.memberMobile,
+      policeStation: form.policeStation,
       firNumber: form.firNumber,
+      firDate: form.firDate,
+      personPhotos: personPhotos.length,
+      hasComplainantId: complainantIdFile.length > 0,
+      hasMemberId: memberIdFile.length > 0,
+      hasFirCopy: firCopy.length > 0,
     })
     toast.success('Complaint registered successfully.')
     navigate(`/public/my-complaints/${newId}`)
@@ -466,7 +486,7 @@ function RegisterComplaintPage() {
           </svg>
           Back to Dashboard
         </Link>
-        <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight text-slate-900">Register a Missing Person Complaint</h1>
+        <h1 className="mt-3 font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Register a Missing Person Complaint</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
           Please fill every section carefully in simple English. A police complaint (FIR) copy is mandatory — without it this complaint cannot be accepted.
         </p>
@@ -504,7 +524,7 @@ function RegisterComplaintPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200/80 bg-surface p-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-8">
+      <div className="rounded-2xl border border-slate-200/80 bg-surface p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-8">
         <div className="mb-6">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-700 dark:text-brand-300">Step {step} of {steps.length}</p>
           <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-slate-900">{steps[step - 1].title}</h2>
@@ -701,7 +721,7 @@ function RegisterComplaintPage() {
                   <h3 className="font-display text-sm font-extrabold uppercase tracking-wide text-slate-700">{section.title}</h3>
                   <dl className="mt-3 divide-y divide-slate-200/80">
                     {section.rows.map(([label, value]) => (
-                      <div key={label} className="grid grid-cols-[140px_1fr] gap-3 py-2">
+                      <div key={label} className="grid grid-cols-1 gap-1 py-2 sm:grid-cols-[140px_1fr] sm:gap-3">
                         <dt className="text-xs font-semibold text-slate-400">{label}</dt>
                         <dd className="text-xs font-semibold text-slate-700">{value}</dd>
                       </div>
@@ -721,16 +741,16 @@ function RegisterComplaintPage() {
             type="button"
             onClick={goBack}
             disabled={step === 1}
-            className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:text-brand-300"
+            className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none dark:hover:text-brand-300"
           >
             Back
           </button>
           {step < steps.length ? (
-            <button type="button" onClick={goNext} className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
+            <button type="button" onClick={goNext} className="flex-1 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700 sm:flex-none">
               Continue
             </button>
           ) : (
-            <button type="button" onClick={submit} className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
+            <button type="button" onClick={submit} className="flex-1 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700 sm:flex-none">
               Submit Complaint
             </button>
           )}

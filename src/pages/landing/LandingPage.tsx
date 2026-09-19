@@ -115,8 +115,8 @@ function LandingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
           <Logo />
           <nav className="flex items-center gap-2 sm:gap-3" aria-label="Main navigation">
-            <button type="button" onClick={() => navigate('/login')} className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-brand-50 hover:text-brand-700 dark:hover:text-brand-300">Login</button>
-            <button type="button" onClick={() => navigate('/signup')} className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-700 sm:px-5">Sign Up</button>
+            <button type="button" onClick={() => navigate('/login')} className="hidden rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-brand-50 hover:text-brand-700 sm:inline-flex dark:hover:text-brand-300">Login</button>
+            <button type="button" onClick={() => navigate('/signup')} className="rounded-xl bg-brand-600 px-3 py-2 text-sm font-bold text-white hover:bg-brand-700 sm:px-5">Sign Up</button>
             <ThemeToggle />
           </nav>
         </div>
