@@ -1,7 +1,7 @@
 import { Navigate, useRoutes } from 'react-router-dom'
 import adminRoutes from './adminRoutes'
 import familyRoutes from './familyRoutes'
-import finderRoutes from './finderRoutes'
+import publicRoutes from './publicRoutes'
 import ngoRoutes from './ngoRoutes'
 import policeRoutes from './policeRoutes'
 import NotFoundPage from '../pages/NotFound/NotFoundPage'
@@ -12,7 +12,7 @@ function AppRoutes() {
     ...familyRoutes,
     ...policeRoutes,
     ...ngoRoutes,
-    ...finderRoutes,
+    ...publicRoutes,
     ...adminRoutes,
     { path: '/not-found', element: <NotFoundPage /> },
     { path: '*', element: <NotFoundPage /> },
