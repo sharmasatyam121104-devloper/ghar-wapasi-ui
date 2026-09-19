@@ -26,12 +26,14 @@ interface MyComplaintDetailPageProps {
   backTo?: string
   backLabel?: string
   newComplaintTo?: string
+  showNewComplaint?: boolean
 }
 
 function MyComplaintDetailPage({
   backTo = '/public/my-complaints',
   backLabel = 'All Complaints',
   newComplaintTo = '/public/register-complaint',
+  showNewComplaint = true,
 }: MyComplaintDetailPageProps) {
   const { id } = useParams()
   const notify = (feature: string) => toast.success(`${feature} — Demo only. Full flow coming soon.`)
@@ -72,7 +74,9 @@ function MyComplaintDetailPage({
           </div>
           <p className="mt-1 font-mono text-sm text-slate-400">{complaint.caseRef} · {complaint.relation}</p>
         </div>
-        <Link to={newComplaintTo} className="w-full rounded-lg bg-brand-600 px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-brand-700 sm:w-auto">Raise a New Complaint</Link>
+        {showNewComplaint && (
+          <Link to={newComplaintTo} className="w-full rounded-lg bg-brand-600 px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-brand-700 sm:w-auto">Raise a New Complaint</Link>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">

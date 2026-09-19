@@ -104,6 +104,7 @@ export function OtpBlock({
   onSend,
   onCodeChange,
   onVerify,
+  requireAadhaar = true,
 }: {
   aadhaar: string
   mobile: string
@@ -113,6 +114,7 @@ export function OtpBlock({
   onSend: () => void
   onCodeChange: (value: string) => void
   onVerify: () => void
+  requireAadhaar?: boolean
 }) {
   if (verified) {
     return (
@@ -120,14 +122,16 @@ export function OtpBlock({
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
           <path d="m5 13 4 4L19 7" />
         </svg>
-        Aadhaar-linked mobile verified
+        {requireAadhaar ? 'Aadhaar-linked mobile verified' : 'Mobile number verified'}
       </div>
     )
   }
-  const canSend = aadhaar.length === 12 && mobile.length === 10
+  const canSend = (requireAadhaar ? aadhaar.length === 12 : true) && mobile.length === 10
   return (
     <div className="rounded-xl border border-slate-200 bg-canvas p-4">
-      <p className="text-xs font-semibold leading-5 text-slate-500">This Aadhaar-linked mobile number must be verified with an OTP before you can continue.</p>
+      <p className="text-xs font-semibold leading-5 text-slate-500">
+        {requireAadhaar ? 'This Aadhaar-linked mobile number must be verified with an OTP before you can continue.' : 'This mobile number must be verified with an OTP before you can continue.'}
+      </p>
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
