@@ -20,6 +20,19 @@
   --color-brand-900: #1e3a8a;
   --color-brand-950: #172554;
 
+  /* Admin panel ka apna colour — citizen site (brand blue) se clearly alag */
+  --color-admin-50: #f5f3ff;
+  --color-admin-100: #ede9fe;
+  --color-admin-200: #ddd6fe;
+  --color-admin-300: #c4b5fd;
+  --color-admin-400: #a78bfa;
+  --color-admin-500: #8b5cf6;
+  --color-admin-600: #7c3aed;
+  --color-admin-700: #6d28d9;
+  --color-admin-800: #5b21b6;
+  --color-admin-900: #4c1d95;
+  --color-admin-950: #2e1065;
+
   --color-canvas: #f2f4f7;
   --color-surface: #ffffff;
 }
@@ -61,6 +74,22 @@
   --color-brand-400: #6e9af8;
   --color-brand-500: #3b82f6;
   --color-brand-600: #2563eb;
+
+  --color-admin-50: #14121d;
+  --color-admin-100: #1a1728;
+  --color-admin-200: #221d33;
+  --color-admin-300: #c4b5fd;
+  --color-admin-400: #a78bfa;
+  --color-admin-500: #8b5cf6;
+  --color-admin-600: #7c3aed;
+}
+
+.admin-surface {
+  --color-canvas: #f7f5fd;
+}
+
+.dark .admin-surface {
+  --color-canvas: #0d0b14;
 }
 
 .dark * {
