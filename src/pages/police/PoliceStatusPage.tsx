@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { inputClass } from '../../components/common/formStyles'
-import { clearPoliceProfile, formatCallTime, scheduleVerificationCall, updatePoliceProfile, updateWindowEndsAt, usePoliceProfile, type PoliceProfile } from '../../data/police'
+import { clearPoliceProfile, formatCallTime, updateWindowEndsAt, usePoliceProfile, type PoliceProfile } from '../../data/police'
 
 function useCountdown(target: number) {
   const [now, setNow] = useState(() => Date.now())
@@ -44,9 +43,6 @@ function PoliceStatusPage() {
   const navigate = useNavigate()
   const deadline = profile ? updateWindowEndsAt(profile) : 0
   const remaining = useCountdown(deadline)
-  const [scheduleLink, setScheduleLink] = useState('')
-  const [scheduleTime, setScheduleTime] = useState('')
-  const [scheduleNote, setScheduleNote] = useState('')
 
   if (!profile) {
     return <Navigate to="/police/register" replace />
@@ -54,11 +50,6 @@ function PoliceStatusPage() {
 
   const withinWindow = remaining > 0
   const theme = statusTheme[profile.status]
-
-  const setStatus = (status: PoliceProfile['status']) => {
-    updatePoliceProfile({ status })
-    toast.success(status === 'verified' ? 'Registration approved (demo).' : 'Registration rejected (demo).')
-  }
 
   const resetDemo = () => {
     clearPoliceProfile()
@@ -174,48 +165,6 @@ function PoliceStatusPage() {
           </p>
         )}
       </div>
-
-      {profile.status === 'pending' && (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-canvas p-5 sm:p-6">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Demo controls (admin screen)</p>
-          <p className="mt-1 text-sm leading-6 text-slate-500">
-            This simulates the admin verification screen. In the real product, an admin reviews the officer, schedules a verification video call, and then approves.
-          </p>
-          <div className="mt-4 rounded-xl border border-slate-200 bg-surface p-4">
-            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Schedule verification video call</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <input className={inputClass} value={scheduleLink} onChange={(event) => setScheduleLink(event.target.value)} placeholder="Meeting link" />
-              <input className={inputClass} type="datetime-local" value={scheduleTime} onChange={(event) => setScheduleTime(event.target.value)} />
-              <input className={inputClass} value={scheduleNote} onChange={(event) => setScheduleNote(event.target.value)} placeholder="Note (optional)" />
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (!scheduleLink.trim() || !scheduleTime) {
-                  toast.error('Enter both the meeting link and a date & time.')
-                  return
-                }
-                scheduleVerificationCall(scheduleLink.trim(), scheduleTime, scheduleNote.trim())
-                toast.success('Verification call scheduled (demo).')
-                setScheduleLink('')
-                setScheduleTime('')
-                setScheduleNote('')
-              }}
-              className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-700"
-            >
-              Schedule Call (demo)
-            </button>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button type="button" onClick={() => setStatus('verified')} className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700">
-              Approve (demo)
-            </button>
-            <button type="button" onClick={() => setStatus('rejected')} className="rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-rose-700">
-              Reject (demo)
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
