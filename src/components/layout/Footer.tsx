@@ -27,7 +27,9 @@ const linkGroups: FooterLinkGroup[] = [
       { label: 'Raise a Complaint', to: '/public/register-complaint' },
       { label: 'AI Photo Search', to: '/public/dashboard' },
       { label: 'Report a Sighting', to: '/public/dashboard' },
-      { label: 'Volunteer With Us', to: '/ngo/dashboard' },
+      { label: 'Police Sign-up', to: '/police/register' },
+      { label: 'NGO Sign-up', to: '/ngo/register' },
+      { label: 'Volunteer With Us', to: '/ngo/register' },
     ],
   },
   {

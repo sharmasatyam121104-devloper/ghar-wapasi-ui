@@ -93,9 +93,13 @@ function Header() {
               )}
             </div>
           ) : !isAdminArea ? (
-            <Link to="/login" className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700">
-              Log in
-            </Link>
+            <>
+              <Link to="/police/register" className="hidden rounded-lg px-2.5 py-2 text-sm font-semibold text-slate-700 hover:bg-brand-50 hover:text-brand-700 sm:block dark:hover:bg-brand-50 dark:hover:text-brand-300">Police</Link>
+              <Link to="/ngo/register" className="hidden rounded-lg px-2.5 py-2 text-sm font-semibold text-slate-700 hover:bg-brand-50 hover:text-brand-700 sm:block dark:hover:bg-brand-50 dark:hover:text-brand-300">NGO</Link>
+              <Link to="/login" className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700">
+                Log in
+              </Link>
+            </>
           ) : null}
 
           <ThemeToggle />

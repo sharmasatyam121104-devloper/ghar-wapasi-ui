@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ConsentCheckbox, Field, PhotoUpload, TextInput } from '../../components/common/FormControls'
 import SearchableSelect from '../../components/common/SearchableSelect'
 import { indianStates, policeRanks } from '../../data/options'
 import { registerPoliceRequest } from '../../api/auth'
 import { ApiError } from '../../api/client'
-import { establishSession, useSession } from '../../data/session'
+import { establishSession } from '../../data/session'
 
 const steps = [
   { id: 1, title: 'Officer Identity' },
@@ -66,7 +66,6 @@ const emptyForm: PoliceFormState = {
 
 function PoliceRegisterPage() {
   const navigate = useNavigate()
-  const session = useSession()
 
   const [form, setForm] = useState<PoliceFormState>(emptyForm)
   const [step, setStep] = useState(1)
@@ -189,9 +188,6 @@ function PoliceRegisterPage() {
       setBusy(false)
     }
   }
-
-  // A signed-in officer edits through the restricted edit form instead.
-  if (session?.role === 'police') return <Navigate to="/police/edit" replace />
 
   const reviewSections: { title: string; rows: [string, string][] }[] = [
     {
