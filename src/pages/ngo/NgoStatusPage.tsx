@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
-import { clearNgoProfile, formatVivaTime, updateWindowEndsAt, useNgoProfile, type NgoProfile } from '../../data/ngo'
+import { Link, Navigate } from 'react-router-dom'
+import { useMe } from '../../data/useMe'
+import type { MeResult } from '../../api/auth'
 
 function useCountdown(target: number) {
   const [now, setNow] = useState(() => Date.now())
@@ -20,7 +20,14 @@ function formatRemaining(ms: number): string {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
-const statusTheme: Record<NgoProfile['status'], { label: string; description: string; className: string }> = {
+function formatCallTime(value?: string): string {
+  if (!value) return '—'
+  const parsed = Date.parse(value)
+  if (Number.isNaN(parsed)) return value
+  return new Date(parsed).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+}
+
+const statusTheme: Record<string, { label: string; description: string; className: string }> = {
   pending: {
     label: 'Pending admin approval',
     description: 'Your registration has been received and is waiting for the admin to verify your organisation over a viva call.',
@@ -38,31 +45,21 @@ const statusTheme: Record<NgoProfile['status'], { label: string; description: st
   },
 }
 
-function NgoStatusPage() {
-  const profile = useNgoProfile()
-  const navigate = useNavigate()
-  const deadline = profile ? updateWindowEndsAt(profile) : 0
-  const remaining = useCountdown(deadline)
-
-  if (!profile) {
-    return <Navigate to="/ngo/register" replace />
-  }
-
-  const withinWindow = remaining > 0
-  const theme = statusTheme[profile.status]
-
-  const resetDemo = () => {
-    clearNgoProfile()
-    toast.success('Demo NGO profile cleared.')
-    navigate('/ngo/register')
-  }
+function StatusContent({ me }: { me: MeResult }) {
+  const status = me.verification_status ?? me.user.verification_status
+  const theme = statusTheme[status] ?? statusTheme.pending
+  const endsAt = me.update_window_ends_at ? Date.parse(me.update_window_ends_at) : 0
+  const remaining = useCountdown(endsAt)
+  const withinWindow = endsAt > 0 && remaining > 0
+  const call = me.verification_call
+  const ngo = me.ngo ?? {}
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Registration Status</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-          Track your NGO account verification. You can edit your registration for 6 hours after submitting it.
+          Track your NGO account verification. You can edit your registration while the edit window is open.
         </p>
       </div>
 
@@ -74,19 +71,19 @@ function NgoStatusPage() {
             <p className="mt-1 max-w-xl text-sm leading-6 text-slate-600">{theme.description}</p>
           </div>
           <span className="inline-flex items-center gap-2 rounded-full bg-surface px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm">
-            <span className={`h-2 w-2 rounded-full ${profile.status === 'verified' ? 'bg-emerald-500' : profile.status === 'pending' ? 'bg-amber-500' : 'bg-rose-500'}`} />
-            {profile.orgName || 'Organisation'}
+            <span className={`h-2 w-2 rounded-full ${status === 'verified' ? 'bg-emerald-500' : status === 'pending' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+            {ngo.org_name || 'Organisation'}
           </span>
         </div>
 
         <dl className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            ['Organisation', profile.orgName || '—'],
-            ['Type', profile.orgType || '—'],
-            ['Reg. Number', profile.regNumber || '—'],
-            ['State / District', `${profile.state || '—'}${profile.district ? ` · ${profile.district}` : ''}`],
-            ['Contact Person', profile.contactPerson || '—'],
-            ['Mobile', profile.contactMobile || '—'],
+            ['Organisation', ngo.org_name || '—'],
+            ['Type', ngo.org_type || '—'],
+            ['Reg. Number', ngo.reg_number || '—'],
+            ['State / District', `${ngo.state || '—'}${ngo.district ? ` · ${ngo.district}` : ''}`],
+            ['Contact Person', ngo.contact_person || me.user.name || '—'],
+            ['Mobile', ngo.contact_mobile || me.user.mobile || '—'],
           ].map(([label, value]) => (
             <div key={label} className="rounded-xl bg-surface/70 px-4 py-3">
               <dt className="text-[11px] font-bold uppercase tracking-wide text-slate-400">{label}</dt>
@@ -95,14 +92,21 @@ function NgoStatusPage() {
           ))}
         </dl>
 
-        {profile.status === 'pending' && (
+        {status === 'rejected' && me.rejection_reason && (
+          <div className="mt-5 rounded-xl bg-surface/70 px-4 py-3">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Reason from the admin</p>
+            <p className="mt-1 text-sm leading-6 font-semibold text-slate-800">{me.rejection_reason}</p>
+          </div>
+        )}
+
+        {status === 'pending' && (
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-surface/70 px-4 py-3">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Editable window closes in</p>
               <p className="mt-0.5 font-mono text-lg font-extrabold tabular-nums text-slate-900">{withinWindow ? formatRemaining(remaining) : 'Expired'}</p>
             </div>
             {withinWindow ? (
-              <Link to="/ngo/register" className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
+              <Link to="/ngo/edit" className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
                 Update Registration
               </Link>
             ) : (
@@ -112,26 +116,23 @@ function NgoStatusPage() {
         )}
 
         <div className="mt-5 flex flex-wrap gap-2">
-          {profile.status === 'verified' && (
+          {status === 'verified' && (
             <Link to="/ngo/dashboard" className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
               Open NGO Portal
             </Link>
           )}
-          {profile.status === 'rejected' && (
-            <Link to="/ngo/register" className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
+          {status === 'rejected' && me.can_edit !== false && (
+            <Link to="/ngo/edit" className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
               Update &amp; Resubmit
             </Link>
           )}
-          <button type="button" onClick={resetDemo} className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:border-rose-300 hover:text-rose-600">
-            Reset demo profile
-          </button>
         </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200/80 bg-surface p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h3 className="font-display text-lg font-extrabold tracking-tight text-slate-900">Viva video call with the admin</h3>
-          {profile.vivaCallLink ? (
+          {call?.link ? (
             <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">Scheduled by admin</span>
           ) : (
             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 dark:bg-slate-800">Not scheduled yet</span>
@@ -140,23 +141,23 @@ function NgoStatusPage() {
         <p className="mt-1 text-sm leading-6 text-slate-500">
           The admin schedules a short viva call to verify your organisation's documents. You only need to join the call — no action required from you.
         </p>
-        {profile.vivaCallLink ? (
+        {call?.link ? (
           <dl className="mt-4 space-y-3">
             <div className="grid grid-cols-1 gap-1 sm:grid-cols-[160px_1fr] sm:gap-3">
               <dt className="text-xs font-bold uppercase tracking-wide text-slate-400">Video call link</dt>
               <dd>
-                <a className="break-all text-sm font-semibold text-brand-700 underline decoration-brand-300 underline-offset-2 dark:text-brand-300" href={profile.vivaCallLink} target="_blank" rel="noreferrer">
-                  {profile.vivaCallLink}
+                <a className="break-all text-sm font-semibold text-brand-700 underline decoration-brand-300 underline-offset-2 dark:text-brand-300" href={call.link} target="_blank" rel="noreferrer">
+                  {call.link}
                 </a>
               </dd>
             </div>
             <div className="grid grid-cols-1 gap-1 sm:grid-cols-[160px_1fr] sm:gap-3">
               <dt className="text-xs font-bold uppercase tracking-wide text-slate-400">Date &amp; Time</dt>
-              <dd className="text-sm font-semibold text-slate-800">{formatVivaTime(profile.vivaCallTime)}</dd>
+              <dd className="text-sm font-semibold text-slate-800">{formatCallTime(call.time)}</dd>
             </div>
             <div className="grid grid-cols-1 gap-1 sm:grid-cols-[160px_1fr] sm:gap-3">
               <dt className="text-xs font-bold uppercase tracking-wide text-slate-400">Note</dt>
-              <dd className="text-sm font-semibold text-slate-800">{profile.vivaCallNote || '—'}</dd>
+              <dd className="text-sm font-semibold text-slate-800">{call.note || '—'}</dd>
             </div>
           </dl>
         ) : (
@@ -167,6 +168,18 @@ function NgoStatusPage() {
       </div>
     </div>
   )
+}
+
+function NgoStatusPage() {
+  const { me, loading, error } = useMe()
+
+  if (loading) {
+    return <p className="text-sm font-semibold text-slate-500">Loading your registration status…</p>
+  }
+  if (error || !me) {
+    return <Navigate to="/ngo/register" replace />
+  }
+  return <StatusContent key={me.user.id} me={me} />
 }
 
 export default NgoStatusPage

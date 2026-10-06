@@ -25,3 +25,7 @@ dist-ssr
 
 # Local project notes
 project-summary.txt
+
+# Local credential notes — never commit
+CREDENTIALS.md
+credentials*.md

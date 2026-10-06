@@ -1,5 +1,7 @@
 export const genderOptions = ['Female', 'Male', 'Other']
 
+export const ngoOrgTypes = ['Trust', 'Society', 'Section 8 Company', 'Charitable NGO', 'Religious Organisation', 'Other']
+
 export const policeRanks = [
   'Constable',
   'Head Constable',

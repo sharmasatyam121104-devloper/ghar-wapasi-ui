@@ -5,10 +5,11 @@ import MyUsersPage from '../pages/admin/MyUsersPage'
 import ReportsPage from '../pages/admin/ReportsPage'
 import SuspensionsPage from '../pages/admin/SuspensionsPage'
 import VerificationRequestsPage from '../pages/admin/VerificationRequestsPage'
+import { RequireRole } from './guards'
 
 const adminRoutes: RouteObject[] = [{
   path: 'admin',
-  element: <AdminLayout />,
+  element: <RequireRole role="admin"><AdminLayout /></RequireRole>,
   children: [
     { index: true, element: <Navigate to="dashboard" replace /> },
     { path: 'dashboard', element: <AdminDashboard /> },
