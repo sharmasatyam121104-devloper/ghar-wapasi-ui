@@ -3,6 +3,7 @@ import adminRoutes from './adminRoutes'
 import publicRoutes from './publicRoutes'
 import ngoRoutes from './ngoRoutes'
 import policeRoutes from './policeRoutes'
+import { RedirectIfAuthed } from './guards'
 import AboutPage from '../pages/public/AboutPage'
 import GuidelinesPage from '../pages/public/GuidelinesPage'
 import ContactPage from '../pages/public/ContactPage'
@@ -16,9 +17,9 @@ import NotFoundPage from '../pages/NotFound/NotFoundPage'
 function AppRoutes() {
   return useRoutes([
     { path: '/', element: <LandingPage /> },
-    { path: '/signup', element: <SignupPage /> },
-    { path: '/login', element: <LoginPage /> },
-    { path: '/forgot-password', element: <ForgotPasswordPage /> },
+    { path: '/signup', element: <RedirectIfAuthed><SignupPage /></RedirectIfAuthed> },
+    { path: '/login', element: <RedirectIfAuthed><LoginPage /></RedirectIfAuthed> },
+    { path: '/forgot-password', element: <RedirectIfAuthed><ForgotPasswordPage /></RedirectIfAuthed> },
     ...policeRoutes,
     ...ngoRoutes,
     ...publicRoutes,

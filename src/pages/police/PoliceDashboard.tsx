@@ -1,12 +1,29 @@
 import { Link } from 'react-router-dom'
 import StatusBadge from '../../components/common/StatusBadge'
 import { getInitials, myComplaints } from '../../data/myComplaints'
-import { formatCallTime, policeStatusLabel, usePoliceProfile } from '../../data/police'
+import { useMe } from '../../data/useMe'
+
+function formatCallTime(value?: string): string {
+  if (!value) return '—'
+  const parsed = Date.parse(value)
+  if (Number.isNaN(parsed)) return value
+  return new Date(parsed).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+}
+
+const statusLabel: Record<string, string> = {
+  pending: 'Pending admin approval',
+  verified: 'Verified',
+  rejected: 'Rejected',
+}
 
 function PoliceDashboard() {
-  const profile = usePoliceProfile()
+  const { me, loading, error } = useMe()
 
-  if (!profile) {
+  if (loading) {
+    return <p className="text-sm font-semibold text-slate-500">Loading the police portal…</p>
+  }
+
+  if (error || !me) {
     return (
       <section className="rounded-2xl border border-slate-200/80 bg-surface p-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-8">
         <h1 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Register as a Police Officer</h1>
@@ -20,14 +37,17 @@ function PoliceDashboard() {
     )
   }
 
-  if (profile.status !== 'verified') {
-    const pending = profile.status === 'pending'
+  const status = me.verification_status ?? me.user.verification_status
+  const police = me.police ?? {}
+
+  if (status !== 'verified') {
+    const pending = status === 'pending'
     return (
       <section className="space-y-6">
         <div className="rounded-2xl border border-slate-200/80 bg-surface p-6 shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-8">
-          <h1 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Welcome, {profile.fullName || 'Officer'}</h1>
+          <h1 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Welcome, {me.user.first_name || 'Officer'}</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
-            Your registration status is <span className="font-bold text-slate-700">{policeStatusLabel[profile.status]}</span>.{' '}
+            Your registration status is <span className="font-bold text-slate-700">{statusLabel[status] ?? status}</span>.{' '}
             {pending
               ? 'The admin is verifying your service details. You will be able to register and manage complaints once approved.'
               : 'Please review your details and resubmit your registration.'}
@@ -36,8 +56,8 @@ function PoliceDashboard() {
             <Link to="/police/status" className="rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700">
               View Registration Status
             </Link>
-            {!pending && (
-              <Link to="/police/register" className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 dark:hover:text-brand-300">
+            {!pending && me.can_edit !== false && (
+              <Link to="/police/edit" className="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 dark:hover:text-brand-300">
                 Update &amp; Resubmit
               </Link>
             )}
@@ -61,15 +81,17 @@ function PoliceDashboard() {
     { label: 'Resolved', value: counts.resolved.toString(), tone: 'text-slate-700' },
   ]
 
+  const call = me.verification_call
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{profile.rank} {profile.fullName}</h1>
+          <h1 className="mt-2 font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{police.rank} {me.user.name}</h1>
           <p className="mt-2 text-sm leading-6 text-slate-500">
-            {profile.stationName}
-            {profile.district ? ` · ${profile.district}` : ''}
-            {profile.state ? `, ${profile.state}` : ''}
+            {police.station_name}
+            {police.district ? ` · ${police.district}` : ''}
+            {police.state ? `, ${police.state}` : ''}
           </p>
         </div>
         <Link to="/police/register-complaint" className="w-full rounded-lg bg-brand-600 px-5 py-2.5 text-center text-sm font-bold text-white hover:bg-brand-700 sm:w-auto">
@@ -86,12 +108,12 @@ function PoliceDashboard() {
         ))}
       </div>
 
-      {profile.verifyCallLink && (
+      {call?.link && (
         <div className="rounded-2xl border border-slate-200/80 bg-surface p-5">
           <p className="text-xs font-bold uppercase tracking-wide text-slate-400">Verification video call scheduled by admin</p>
-          <p className="mt-1 break-all text-sm font-semibold text-brand-700 dark:text-brand-300">{profile.verifyCallLink}</p>
-          {profile.verifyCallTime && <p className="mt-1 text-xs font-semibold text-slate-500">{formatCallTime(profile.verifyCallTime)}</p>}
-          {profile.verifyCallNote && <p className="mt-1 text-sm text-slate-500">{profile.verifyCallNote}</p>}
+          <p className="mt-1 break-all text-sm font-semibold text-brand-700 dark:text-brand-300">{call.link}</p>
+          {call.time && <p className="mt-1 text-xs font-semibold text-slate-500">{formatCallTime(call.time)}</p>}
+          {call.note && <p className="mt-1 text-sm text-slate-500">{call.note}</p>}
         </div>
       )}
 

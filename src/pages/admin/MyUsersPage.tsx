@@ -1,20 +1,22 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import AdminModal from '../../components/admin/AdminModal'
 import { ActionButton, ConsoleStat, DetailRow, Pill, SectionCard } from '../../components/admin/AdminUi'
 import { filterChipClass } from '../../components/admin/adminStyles'
 import { inputClass } from '../../components/common/formStyles'
+import { errorMessage } from '../../api/client'
+import { listRequests, toAdminMember } from '../../api/verification'
 import {
   formatSlot,
   isMemberSuspended,
   scopedCases,
-  scopedMembers,
   scopedReports,
   setCaseOutcome,
   tallyCases,
   timeAgo,
   useAdminConsole,
+  type AdminMember,
   type CaseOutcome,
 } from '../../data/admin'
 import { useCurrentAdmin } from '../../data/session'
@@ -41,14 +43,35 @@ function MyUsersPage() {
   const [outcome, setOutcome] = useState<CaseOutcome>('found')
   const [outcomeNote, setOutcomeNote] = useState('')
   const [foundDays, setFoundDays] = useState('5')
+  const [records, setRecords] = useState<AdminMember[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      try {
+        const [verifiedList, rejectedList] = await Promise.all([listRequests('verified'), listRequests('rejected')])
+        if (!alive) return
+        setRecords([...verifiedList.users, ...rejectedList.users].map(toAdminMember))
+      } catch (error) {
+        if (!alive) return
+        setRecords([])
+        toast.error(errorMessage(error))
+      } finally {
+        if (alive) setLoading(false)
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [])
 
   if (!admin) return null
 
-  const members = scopedMembers(state, admin)
   const cases = scopedCases(state, admin)
 
-  const verified = members.filter((member) => member.status === 'verified')
-  const rejected = members.filter((member) => member.status === 'rejected')
+  const verified = records.filter((member) => member.status === 'verified')
+  const rejected = records.filter((member) => member.status === 'rejected')
   const filtered = verified.filter((member) => {
     const matchesRole = role === 'all' || member.role === role
     const needle = query.trim().toLowerCase()
@@ -60,7 +83,7 @@ function MyUsersPage() {
     return matchesRole && matchesQuery
   })
 
-  const selected = members.find((member) => member.id === openId)
+  const selected = records.find((member) => member.id === openId)
   const selectedCases = selected ? cases.filter((item) => item.memberId === selected.id) : []
   const selectedReports = selected ? scopedReports(state, admin).filter((report) => report.targetMemberId === selected.id) : []
   const selectedTally = tallyCases(selectedCases)
@@ -88,7 +111,9 @@ function MyUsersPage() {
       </div>
 
       <SectionCard title="My users" subtitle="Click any user to see the full record, all their cases and every report against them.">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <p className="text-sm text-slate-500">Loading users…</p>
+        ) : filtered.length === 0 ? (
           <p className="text-sm text-slate-500">No verified account matches this search.</p>
         ) : (
           <ul className="space-y-2">

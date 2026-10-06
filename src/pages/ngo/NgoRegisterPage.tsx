@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ConsentCheckbox, Field, OtpBlock, PhotoUpload, SelectInput, TextAreaInput, TextInput } from '../../components/common/FormControls'
+import { ConsentCheckbox, Field, PhotoUpload, SelectInput, TextAreaInput, TextInput } from '../../components/common/FormControls'
 import SearchableSelect from '../../components/common/SearchableSelect'
-import { ngoOrgTypes, saveNgoProfile, submitNgoRegistration, useNgoProfile, type NgoFormInput } from '../../data/ngo'
-import { indianStates } from '../../data/options'
-
-const DEMO_OTP = '123456'
+import { indianStates, ngoOrgTypes } from '../../data/options'
+import { registerNgoRequest } from '../../api/auth'
+import { ApiError } from '../../api/client'
+import { establishSession, useSession } from '../../data/session'
 
 const steps = [
   { id: 1, title: 'Organisation' },
@@ -15,6 +15,16 @@ const steps = [
   { id: 4, title: 'Login Security' },
   { id: 5, title: 'Review' },
 ]
+
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024
+
+const toDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error ?? new Error('Could not read the photo.'))
+    reader.readAsDataURL(file)
+  })
 
 interface NgoFormState {
   orgName: string
@@ -56,39 +66,17 @@ const emptyForm: NgoFormState = {
 
 function NgoRegisterPage() {
   const navigate = useNavigate()
-  const profile = useNgoProfile()
+  const session = useSession()
 
-  const [form, setForm] = useState<NgoFormState>(() => ({
-    ...emptyForm,
-    orgName: profile?.orgName ?? '',
-    orgType: profile?.orgType ?? '',
-    regNumber: profile?.regNumber ?? '',
-    state: profile?.state ?? '',
-    district: profile?.district ?? '',
-    city: profile?.city ?? '',
-    address: profile?.address ?? '',
-    contactPerson: profile?.contactPerson ?? '',
-    designation: profile?.designation ?? '',
-    contactMobile: profile?.contactMobile ?? '',
-    contactEmail: profile?.contactEmail ?? '',
-    website: profile?.website ?? '',
-    contactAadhaar: profile?.contactAadhaar ?? '',
-  }))
+  const [form, setForm] = useState<NgoFormState>(emptyForm)
   const [step, setStep] = useState(1)
   const [errors, setErrors] = useState<string[]>([])
+  const [busy, setBusy] = useState(false)
 
   const [regCertificate, setRegCertificate] = useState<File[]>([])
   const [orgPhoto, setOrgPhoto] = useState<File[]>([])
 
-  const [otpSent, setOtpSent] = useState(false)
-  const [otp, setOtp] = useState('')
-  const [verified, setVerified] = useState(Boolean(profile))
-
-  const isEdit = Boolean(profile)
   const update = <K extends keyof NgoFormState>(key: K, value: NgoFormState[K]) => setForm((prev) => ({ ...prev, [key]: value }))
-
-  const hasRegCertificate = regCertificate.length > 0 || Boolean(profile?.hasRegCertificate)
-  const hasOrgPhoto = orgPhoto.length > 0 || Boolean(profile?.hasOrgPhoto)
 
   const validateStep = (current: number): string[] => {
     const list: string[] = []
@@ -99,12 +87,13 @@ function NgoRegisterPage() {
     if (current === 2) {
       if (!form.contactPerson.trim()) list.push('Contact person name is required.')
       if (form.contactMobile.length !== 10) list.push('Contact mobile number must be 10 digits.')
-      if (form.contactEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail.trim())) list.push('Enter a valid email address.')
-      if (!verified) list.push('Verify your mobile number with the OTP.')
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contactEmail.trim())) list.push('A valid contact email is required for registration.')
+    }
+    if (current === 3) {
+      if (form.contactAadhaar.length !== 12) list.push('Contact person Aadhaar must be 12 digits — it is required for registration.')
     }
     if (current === 4) {
-      if (!isEdit && form.password.length < 6) list.push('Password must be at least 6 characters.')
-      if (isEdit && form.password && form.password.length < 6) list.push('New password must be at least 6 characters.')
+      if (form.password.length < 6) list.push('Password must be at least 6 characters.')
       if (form.password !== form.confirmPassword) list.push('Passwords do not match.')
     }
     return list
@@ -130,22 +119,8 @@ function NgoRegisterPage() {
     scrollTop()
   }
 
-  const sendOtp = () => {
-    setOtpSent(true)
-    toast.success(`OTP sent to the registered mobile (demo OTP: ${DEMO_OTP}).`)
-  }
-
-  const verifyOtp = () => {
-    if (otp.trim() === DEMO_OTP) {
-      setVerified(true)
-      toast.success('Mobile number verified.')
-    } else {
-      toast.error(`Invalid OTP. Use the demo OTP ${DEMO_OTP}.`)
-    }
-  }
-
-  const submit = () => {
-    const allErrors = [1, 2, 4].flatMap((current) => validateStep(current))
+  const submit = async () => {
+    const allErrors = [1, 2, 3, 4].flatMap((current) => validateStep(current))
     const uniqueErrors = [...new Set(allErrors)]
     if (uniqueErrors.length > 0) {
       setErrors(uniqueErrors)
@@ -159,39 +134,59 @@ function NgoRegisterPage() {
       toast.error('Please accept the declaration before submitting.')
       return
     }
-
-    const input: NgoFormInput = {
-      orgName: form.orgName.trim(),
-      orgType: form.orgType,
-      regNumber: form.regNumber.trim(),
-      state: form.state,
-      district: form.district.trim(),
-      city: form.city.trim(),
-      address: form.address.trim(),
-      contactPerson: form.contactPerson.trim(),
-      designation: form.designation.trim(),
-      contactMobile: form.contactMobile,
-      contactEmail: form.contactEmail.trim(),
-      website: form.website.trim(),
-      contactAadhaar: form.contactAadhaar,
-      hasRegCertificate,
-      hasOrgPhoto,
+    const big = [...regCertificate, ...orgPhoto].find((file) => file.size > MAX_PHOTO_BYTES)
+    if (big) {
+      toast.error(`"${big.name}" is larger than 2 MB. Please upload a smaller photo.`)
+      return
     }
 
-    if (profile) {
-      if (profile.status === 'rejected') {
-        saveNgoProfile({ ...profile, ...input, status: 'pending', submittedAt: Date.now() })
-        toast.success('Registration resubmitted for admin approval.')
-      } else {
-        saveNgoProfile({ ...profile, ...input })
-        toast.success('Registration details updated successfully.')
-      }
-    } else {
-      submitNgoRegistration(input)
+    const [first, ...rest] = form.contactPerson.trim().split(/\s+/).filter(Boolean)
+    setBusy(true)
+    try {
+      const regFiles = await Promise.all(regCertificate.map(toDataUrl))
+      const photoFiles = await Promise.all(orgPhoto.map(toDataUrl))
+      const result = await registerNgoRequest({
+        first_name: first,
+        last_name: rest.join(' '),
+        aadhaar: form.contactAadhaar,
+        mobile: form.contactMobile,
+        email: form.contactEmail.trim(),
+        password: form.password,
+        ngo: {
+          org_name: form.orgName.trim(),
+          org_type: form.orgType,
+          reg_number: form.regNumber.trim(),
+          state: form.state,
+          district: form.district.trim(),
+          city: form.city.trim(),
+          address: form.address.trim(),
+          contact_person: form.contactPerson.trim(),
+          designation: form.designation.trim(),
+          contact_mobile: form.contactMobile,
+          contact_email: form.contactEmail.trim(),
+          website: form.website.trim(),
+          contact_aadhaar: form.contactAadhaar,
+          reg_certificate_files: regFiles,
+          org_photo_files: photoFiles,
+        },
+      })
+      establishSession(result.user, form.contactMobile)
       toast.success('Registration submitted. It has been sent to the admin for verification.')
+      navigate('/ngo/status', { replace: true })
+    } catch (error) {
+      if (error instanceof ApiError && error.errors) {
+        setErrors([...new Set(Object.values(error.errors).filter(Boolean))])
+        toast.error('Some details were rejected. Please review the highlighted fields.')
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Registration failed.')
+      }
+    } finally {
+      setBusy(false)
     }
-    navigate('/ngo/status')
   }
+
+  // A signed-in NGO edits through the restricted edit form instead.
+  if (session?.role === 'ngo') return <Navigate to="/ngo/edit" replace />
 
   const reviewSections: { title: string; rows: [string, string][] }[] = [
     {
@@ -209,7 +204,7 @@ function NgoRegisterPage() {
       rows: [
         ['Full Name', form.contactPerson || '—'],
         ['Designation', form.designation || '—'],
-        ['Mobile', `${form.contactMobile || '—'} ${verified ? '· verified' : ''}`.trim()],
+        ['Mobile', form.contactMobile || '—'],
         ['Email', form.contactEmail || '—'],
         ['Website', form.website || '—'],
       ],
@@ -217,10 +212,10 @@ function NgoRegisterPage() {
     {
       title: 'KYC & Documents',
       rows: [
-        ['Contact Aadhaar', form.contactAadhaar ? 'Provided (optional)' : 'Not provided'],
+        ['Contact Aadhaar', form.contactAadhaar || '—'],
         ['Address', form.address || '—'],
-        ['Registration Certificate', hasRegCertificate ? 'Uploaded' : 'Not uploaded'],
-        ['Organisation Photo', hasOrgPhoto ? 'Uploaded' : 'Not uploaded'],
+        ['Registration Certificate', regCertificate.length > 0 ? 'Uploaded' : 'Not uploaded'],
+        ['Organisation Photo', orgPhoto.length > 0 ? 'Uploaded' : 'Not uploaded'],
       ],
     },
   ]
@@ -235,7 +230,7 @@ function NgoRegisterPage() {
           Back to NGO Portal
         </Link>
         <h1 className="mt-3 font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-          {isEdit ? 'Update NGO Registration' : 'NGO / Organisation Registration'}
+          NGO / Organisation Registration
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
           Only the marked fields are mandatory — everything else is optional, so register with whatever information you have. After you submit, the admin verifies your organisation over a short viva call.
@@ -333,35 +328,23 @@ function NgoRegisterPage() {
               </Field>
             </div>
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Contact mobile number" required hint="Verified with an OTP below.">
+              <Field label="Contact mobile number" required>
                 <TextInput value={form.contactMobile} onChange={(value) => update('contactMobile', value.replace(/\D/g, ''))} placeholder="10-digit mobile" inputMode="numeric" maxLength={10} />
               </Field>
-              <Field label="Email address">
-                <TextInput value={form.contactEmail} onChange={(value) => update('contactEmail', value)} type="email" placeholder="Email (optional)" />
+              <Field label="Email address" required hint="Used for login and admin correspondence.">
+                <TextInput value={form.contactEmail} onChange={(value) => update('contactEmail', value)} type="email" placeholder="e.g. contact@navdisha.org" />
               </Field>
             </div>
             <Field label="Website / social page">
               <TextInput value={form.website} onChange={(value) => update('website', value)} placeholder="e.g. https://navdisha.org (optional)" />
             </Field>
-            <OtpBlock
-              aadhaar={form.contactAadhaar}
-              mobile={form.contactMobile}
-              sent={otpSent}
-              code={otp}
-              verified={verified}
-              onSend={sendOtp}
-              onCodeChange={setOtp}
-              onVerify={verifyOtp}
-              requireAadhaar={false}
-            />
-            <p className="text-xs leading-5 text-slate-400">No Aadhaar needed here — a mobile OTP is enough.</p>
           </div>
         )}
 
         {step === 3 && (
           <div className="space-y-5">
-            <Field label="Contact person Aadhaar (optional)" hint="Optional, but it speeds up admin verification.">
-              <TextInput value={form.contactAadhaar} onChange={(value) => update('contactAadhaar', value.replace(/\D/g, ''))} placeholder="12-digit Aadhaar, if available" inputMode="numeric" maxLength={12} />
+            <Field label="Contact person Aadhaar" required hint="Mandatory for registration — it speeds up admin verification.">
+              <TextInput value={form.contactAadhaar} onChange={(value) => update('contactAadhaar', value.replace(/\D/g, ''))} placeholder="12-digit Aadhaar" inputMode="numeric" maxLength={12} />
             </Field>
             <PhotoUpload label="Registration certificate" hint="Files like registration / 12A / 80G certificate. Optional." files={regCertificate} onChange={setRegCertificate} />
             <PhotoUpload label="Organisation / office photo" hint="Optional. A photo of office, volunteers, or a team photo." files={orgPhoto} onChange={setOrgPhoto} />
@@ -370,16 +353,11 @@ function NgoRegisterPage() {
 
         {step === 4 && (
           <div className="space-y-5">
-            {isEdit && (
-              <div className="rounded-xl border border-brand-200/70 bg-brand-50 p-4 text-sm leading-6 text-brand-800 dark:border-brand-500/30 dark:bg-brand-950/40 dark:text-brand-200">
-                Leave the password fields blank to keep your current password.
-              </div>
-            )}
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label={isEdit ? 'New password' : 'Password'} required={!isEdit}>
+              <Field label="Password" required>
                 <TextInput value={form.password} onChange={(value) => update('password', value)} type="password" placeholder="At least 6 characters" />
               </Field>
-              <Field label="Confirm password" required={!isEdit}>
+              <Field label="Confirm password" required>
                 <TextInput value={form.confirmPassword} onChange={(value) => update('confirmPassword', value)} type="password" placeholder="Re-enter password" />
               </Field>
             </div>
@@ -407,7 +385,7 @@ function NgoRegisterPage() {
               I declare that I am authorised to register this organisation and all the details provided above are true and correct. I understand that false information will lead to removal from this platform.
             </ConsentCheckbox>
             <p className="text-xs leading-5 text-slate-400">
-              After submission, your registration is sent to the admin. The admin schedules a short viva video call to verify your organisation. This is a demo build — no real data is stored or transmitted.
+              After submission, your registration is sent to the admin. The admin schedules a short viva video call to verify your organisation.
             </p>
           </div>
         )}
@@ -416,7 +394,7 @@ function NgoRegisterPage() {
           <button
             type="button"
             onClick={goBack}
-            disabled={step === 1}
+            disabled={step === 1 || busy}
             className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none dark:hover:text-brand-300"
           >
             Back
@@ -426,8 +404,8 @@ function NgoRegisterPage() {
               Continue
             </button>
           ) : (
-            <button type="button" onClick={submit} className="flex-1 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700 sm:flex-none">
-              {isEdit ? 'Save Changes' : 'Submit Registration'}
+            <button type="button" onClick={() => void submit()} disabled={busy} className="flex-1 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none">
+              {busy ? 'Submitting…' : 'Submit Registration'}
             </button>
           )}
         </div>

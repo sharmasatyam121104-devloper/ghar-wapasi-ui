@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ConsentCheckbox, Field, OtpBlock, PhotoUpload, TextInput } from '../../components/common/FormControls'
+import { ConsentCheckbox, Field, PhotoUpload, TextInput } from '../../components/common/FormControls'
 import SearchableSelect from '../../components/common/SearchableSelect'
 import { indianStates, policeRanks } from '../../data/options'
-import { savePoliceProfile, submitPoliceRegistration, usePoliceProfile, type PoliceFormInput } from '../../data/police'
-
-const DEMO_OTP = '123456'
+import { registerPoliceRequest } from '../../api/auth'
+import { ApiError } from '../../api/client'
+import { establishSession, useSession } from '../../data/session'
 
 const steps = [
   { id: 1, title: 'Officer Identity' },
@@ -15,6 +15,16 @@ const steps = [
   { id: 4, title: 'Login Security' },
   { id: 5, title: 'Review' },
 ]
+
+const MAX_PHOTO_BYTES = 2 * 1024 * 1024
+
+const toDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error ?? new Error('Could not read the photo.'))
+    reader.readAsDataURL(file)
+  })
 
 interface PoliceFormState {
   fullName: string
@@ -56,39 +66,19 @@ const emptyForm: PoliceFormState = {
 
 function PoliceRegisterPage() {
   const navigate = useNavigate()
-  const profile = usePoliceProfile()
+  const session = useSession()
 
-  const [form, setForm] = useState<PoliceFormState>(() => ({
-    ...emptyForm,
-    fullName: profile?.fullName ?? '',
-    rank: profile?.rank ?? '',
-    badgeNumber: profile?.badgeNumber ?? '',
-    stationName: profile?.stationName ?? '',
-    district: profile?.district ?? '',
-    state: profile?.state ?? '',
-    officialEmail: profile?.officialEmail ?? '',
-    aadhaar: profile?.aadhaar ?? '',
-    mobile: profile?.mobile ?? '',
-    employeeId: profile?.employeeId ?? '',
-    joiningDate: profile?.joiningDate ?? '',
-    reportingOfficer: profile?.reportingOfficer ?? '',
-    reportingOfficerContact: profile?.reportingOfficerContact ?? '',
-  }))
+  const [form, setForm] = useState<PoliceFormState>(emptyForm)
   const [step, setStep] = useState(1)
   const [errors, setErrors] = useState<string[]>([])
+  const [busy, setBusy] = useState(false)
 
   const [idCard, setIdCard] = useState<File[]>([])
   const [appointmentProof, setAppointmentProof] = useState<File[]>([])
 
-  const [otpSent, setOtpSent] = useState(false)
-  const [otp, setOtp] = useState('')
-  const [verified, setVerified] = useState(Boolean(profile))
-
-  const isEdit = Boolean(profile)
   const update = <K extends keyof PoliceFormState>(key: K, value: PoliceFormState[K]) => setForm((prev) => ({ ...prev, [key]: value }))
 
-  const hasIdCard = idCard.length > 0 || Boolean(profile?.hasIdCard)
-  const hasAppointmentProof = appointmentProof.length > 0 || Boolean(profile?.hasAppointmentProof)
+  const hasIdCard = idCard.length > 0
 
   const validateStep = (current: number): string[] => {
     const list: string[] = []
@@ -103,7 +93,6 @@ function PoliceRegisterPage() {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.officialEmail.trim())) list.push('Enter a valid official email address.')
       if (form.aadhaar.length !== 12) list.push('Aadhaar number must be 12 digits.')
       if (form.mobile.length !== 10) list.push('Official mobile number must be 10 digits.')
-      if (!verified) list.push('Verify your Aadhaar-linked mobile with the OTP.')
     }
     if (current === 3) {
       if (!form.employeeId.trim()) list.push('Employee / service number is required.')
@@ -112,8 +101,7 @@ function PoliceRegisterPage() {
       if (!hasIdCard) list.push('Upload a photo of your police ID card — it is mandatory.')
     }
     if (current === 4) {
-      if (!isEdit && form.password.length < 6) list.push('Password must be at least 6 characters.')
-      if (isEdit && form.password && form.password.length < 6) list.push('New password must be at least 6 characters.')
+      if (form.password.length < 6) list.push('Password must be at least 6 characters.')
       if (form.password !== form.confirmPassword) list.push('Passwords do not match.')
     }
     return list
@@ -139,21 +127,7 @@ function PoliceRegisterPage() {
     scrollTop()
   }
 
-  const sendOtp = () => {
-    setOtpSent(true)
-    toast.success(`OTP sent to the registered mobile (demo OTP: ${DEMO_OTP}).`)
-  }
-
-  const verifyOtp = () => {
-    if (otp.trim() === DEMO_OTP) {
-      setVerified(true)
-      toast.success('Mobile number verified.')
-    } else {
-      toast.error(`Invalid OTP. Use the demo OTP ${DEMO_OTP}.`)
-    }
-  }
-
-  const submit = () => {
+  const submit = async () => {
     const allErrors = [1, 2, 3, 4].flatMap((current) => validateStep(current))
     const uniqueErrors = [...new Set(allErrors)]
     if (uniqueErrors.length > 0) {
@@ -168,39 +142,56 @@ function PoliceRegisterPage() {
       toast.error('Please accept the declaration before submitting.')
       return
     }
-
-    const input: PoliceFormInput = {
-      fullName: form.fullName.trim(),
-      rank: form.rank,
-      badgeNumber: form.badgeNumber.trim(),
-      stationName: form.stationName.trim(),
-      district: form.district.trim(),
-      state: form.state,
-      officialEmail: form.officialEmail.trim(),
-      aadhaar: form.aadhaar,
-      mobile: form.mobile,
-      employeeId: form.employeeId.trim(),
-      joiningDate: form.joiningDate,
-      reportingOfficer: form.reportingOfficer.trim(),
-      reportingOfficerContact: form.reportingOfficerContact.trim(),
-      hasIdCard,
-      hasAppointmentProof,
+    const big = [...idCard, ...appointmentProof].find((file) => file.size > MAX_PHOTO_BYTES)
+    if (big) {
+      toast.error(`"${big.name}" is larger than 2 MB. Please upload a smaller photo.`)
+      return
     }
 
-    if (profile) {
-      if (profile.status === 'rejected') {
-        savePoliceProfile({ ...profile, ...input, status: 'pending', submittedAt: Date.now() })
-        toast.success('Registration resubmitted for admin approval.')
-      } else {
-        savePoliceProfile({ ...profile, ...input })
-        toast.success('Registration details updated successfully.')
-      }
-    } else {
-      submitPoliceRegistration(input)
+    const [first, ...rest] = form.fullName.trim().split(/\s+/).filter(Boolean)
+    setBusy(true)
+    try {
+      const idCardFiles = await Promise.all(idCard.map(toDataUrl))
+      const appointmentFiles = await Promise.all(appointmentProof.map(toDataUrl))
+      const result = await registerPoliceRequest({
+        first_name: first,
+        last_name: rest.join(' '),
+        aadhaar: form.aadhaar,
+        mobile: form.mobile,
+        email: form.officialEmail.trim(),
+        password: form.password,
+        police: {
+          rank: form.rank,
+          badge_number: form.badgeNumber.trim(),
+          station_name: form.stationName.trim(),
+          district: form.district.trim(),
+          state: form.state,
+          official_email: form.officialEmail.trim(),
+          employee_id: form.employeeId.trim(),
+          joining_date: form.joiningDate,
+          reporting_officer: form.reportingOfficer.trim(),
+          reporting_officer_contact: form.reportingOfficerContact.trim(),
+          id_card_files: idCardFiles,
+          appointment_proof_files: appointmentFiles,
+        },
+      })
+      establishSession(result.user, form.mobile)
       toast.success('Registration submitted. It has been sent to the admin for verification.')
+      navigate('/police/status', { replace: true })
+    } catch (error) {
+      if (error instanceof ApiError && error.errors) {
+        setErrors([...new Set(Object.values(error.errors).filter(Boolean))])
+        toast.error('Some details were rejected. Please review the highlighted fields.')
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Registration failed.')
+      }
+    } finally {
+      setBusy(false)
     }
-    navigate('/police/status')
   }
+
+  // A signed-in officer edits through the restricted edit form instead.
+  if (session?.role === 'police') return <Navigate to="/police/edit" replace />
 
   const reviewSections: { title: string; rows: [string, string][] }[] = [
     {
@@ -218,7 +209,7 @@ function PoliceRegisterPage() {
       rows: [
         ['Official Email', form.officialEmail || '—'],
         ['Aadhaar', form.aadhaar || '—'],
-        ['Mobile', `${form.mobile || '—'} ${verified ? '· verified' : ''}`.trim()],
+        ['Mobile', form.mobile || '—'],
       ],
     },
     {
@@ -229,7 +220,7 @@ function PoliceRegisterPage() {
         ['Reporting Officer', form.reportingOfficer || '—'],
         ['Officer Contact', form.reportingOfficerContact || '—'],
         ['ID Card', hasIdCard ? 'Uploaded' : 'Not uploaded'],
-        ['Appointment Proof', hasAppointmentProof ? 'Uploaded' : 'Optional'],
+        ['Appointment Proof', appointmentProof.length > 0 ? 'Uploaded' : 'Optional'],
       ],
     },
   ]
@@ -244,12 +235,10 @@ function PoliceRegisterPage() {
           Back to Police Portal
         </Link>
         <h1 className="mt-3 font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-          {isEdit ? 'Update Police Registration' : 'Police Officer Registration'}
+          Police Officer Registration
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-          {isEdit
-            ? 'You can update your details within 6 hours of submission. Changes are re-checked by the admin.'
-            : 'Register with your service details and Aadhaar-linked mobile. After you submit, the admin verifies your account and opens the police portal.'}
+          Register with your service details and Aadhaar-linked mobile. After you submit, the admin verifies your account and opens the police portal.
         </p>
       </div>
 
@@ -342,16 +331,6 @@ function PoliceRegisterPage() {
                 <TextInput value={form.mobile} onChange={(value) => update('mobile', value.replace(/\D/g, ''))} placeholder="10-digit mobile" inputMode="numeric" maxLength={10} />
               </Field>
             </div>
-            <OtpBlock
-              aadhaar={form.aadhaar}
-              mobile={form.mobile}
-              sent={otpSent}
-              code={otp}
-              verified={verified}
-              onSend={sendOtp}
-              onCodeChange={setOtp}
-              onVerify={verifyOtp}
-            />
           </div>
         )}
 
@@ -373,23 +352,18 @@ function PoliceRegisterPage() {
                 <TextInput value={form.reportingOfficerContact} onChange={(value) => update('reportingOfficerContact', value.replace(/\D/g, ''))} placeholder="10-digit mobile" inputMode="numeric" maxLength={10} />
               </Field>
             </div>
-            <PhotoUpload label="Police ID card" hint="Clear photo of your identity card. Mandatory." required files={idCard} onChange={setIdCard} />
-            <PhotoUpload label="Appointment / duty proof" hint="Optional, but speeds up admin verification." files={appointmentProof} onChange={setAppointmentProof} />
+            <PhotoUpload label="Police ID card" hint="Clear photo of your identity card. Mandatory — up to 2 MB." required files={idCard} onChange={setIdCard} />
+            <PhotoUpload label="Appointment / duty proof" hint="Optional, but speeds up admin verification. Up to 2 MB." files={appointmentProof} onChange={setAppointmentProof} />
           </div>
         )}
 
         {step === 4 && (
           <div className="space-y-5">
-            {isEdit && (
-              <div className="rounded-xl border border-brand-200/70 bg-brand-50 p-4 text-sm leading-6 text-brand-800 dark:border-brand-500/30 dark:bg-brand-950/40 dark:text-brand-200">
-                Leave the password fields blank to keep your current password.
-              </div>
-            )}
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label={isEdit ? 'New password' : 'Password'} required={!isEdit}>
+              <Field label="Password" required>
                 <TextInput value={form.password} onChange={(value) => update('password', value)} type="password" placeholder="At least 6 characters" />
               </Field>
-              <Field label="Confirm password" required={!isEdit}>
+              <Field label="Confirm password" required>
                 <TextInput value={form.confirmPassword} onChange={(value) => update('confirmPassword', value)} type="password" placeholder="Re-enter password" />
               </Field>
             </div>
@@ -417,7 +391,7 @@ function PoliceRegisterPage() {
               I declare that I am a serving police officer and all the details provided above are true and correct. I understand that false information will lead to legal action and permanent removal from this platform.
             </ConsentCheckbox>
             <p className="text-xs leading-5 text-slate-400">
-              After submission, your registration is sent to the admin for verification. This is a demo build — no real data is stored or transmitted.
+              After submission, your registration is sent to the admin for verification.
             </p>
           </div>
         )}
@@ -426,7 +400,7 @@ function PoliceRegisterPage() {
           <button
             type="button"
             onClick={goBack}
-            disabled={step === 1}
+            disabled={step === 1 || busy}
             className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none dark:hover:text-brand-300"
           >
             Back
@@ -436,8 +410,8 @@ function PoliceRegisterPage() {
               Continue
             </button>
           ) : (
-            <button type="button" onClick={submit} className="flex-1 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700 sm:flex-none">
-              {isEdit ? 'Save Changes' : 'Submit Registration'}
+            <button type="button" onClick={() => void submit()} disabled={busy} className="flex-1 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none">
+              {busy ? 'Submitting…' : 'Submit Registration'}
             </button>
           )}
         </div>

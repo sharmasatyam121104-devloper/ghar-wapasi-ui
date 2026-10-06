@@ -1,33 +1,32 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import AdminModal from '../../components/admin/AdminModal'
 import { ActionButton, ConsoleStat, DetailRow, Pill, SectionCard } from '../../components/admin/AdminUi'
 import { filterChipClass } from '../../components/admin/adminStyles'
 import { inputClass } from '../../components/common/formStyles'
+import { errorMessage, ApiError } from '../../api/client'
 import {
-  approvalBlockReason,
-  approveMember,
-  buildCallTime,
-  callSlots,
-  formatSlot,
-  rejectMember,
-  scheduleMemberCall,
-  scopedMembers,
-  timeAgo,
-  todayIso,
-  useAdminConsole,
-  type AdminMember,
-} from '../../data/admin'
+  approveRequest,
+  clearCall,
+  listRequests,
+  rejectRequest,
+  scheduleCall,
+  toAdminMember,
+  type VerificationRecord,
+  type VerificationStatus,
+} from '../../api/verification'
+import { buildCallTime, callSlots, formatSlot, timeAgo, todayIso, type AdminMember } from '../../data/admin'
 import { useCurrentAdmin } from '../../data/session'
 
-type Filter = 'pending' | 'verified' | 'rejected'
+type Filter = VerificationStatus
+
+const ZERO_COUNTS: Record<Filter, number> = { pending: 0, verified: 0, rejected: 0 }
 
 function nowMs() {
   return Date.now()
 }
 
 function VerificationRequestsPage() {
-  const state = useAdminConsole()
   const admin = useCurrentAdmin()
   const [filter, setFilter] = useState<Filter>('pending')
   const [openId, setOpenId] = useState('')
@@ -37,21 +36,56 @@ function VerificationRequestsPage() {
   const [note, setNote] = useState('')
   const [rejecting, setRejecting] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
+  const [records, setRecords] = useState<AdminMember[]>([])
+  const [counts, setCounts] = useState<Record<Filter, number>>(ZERO_COUNTS)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      try {
+        const [pending, verified, rejected] = await Promise.all([
+          listRequests('pending'),
+          listRequests('verified'),
+          listRequests('rejected'),
+        ])
+        if (!alive) return
+        setCounts({ pending: pending.total, verified: verified.total, rejected: rejected.total })
+        setRecords([...pending.users, ...verified.users, ...rejected.users].map(toAdminMember))
+      } catch (error) {
+        if (!alive) return
+        setRecords([])
+        setCounts(ZERO_COUNTS)
+        toast.error(errorMessage(error))
+      } finally {
+        if (alive) setLoading(false)
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [])
 
   if (!admin) return null
 
-  const members = scopedMembers(state, admin)
-  const list = members.filter((member) => member.status === filter)
-  const selected = members.find((member) => member.id === openId)
+  const list = records.filter((member) => member.status === filter)
+  const selected = records.find((member) => member.id === openId)
 
-  const counts = {
-    pending: members.filter((member) => member.status === 'pending').length,
-    verified: members.filter((member) => member.status === 'verified').length,
-    rejected: members.filter((member) => member.status === 'rejected').length,
+  const applyUpdate = (previous: AdminMember, record: VerificationRecord) => {
+    const next = toAdminMember(record)
+    setRecords((items) => items.map((item) => (item.id === next.id ? next : item)))
+    if (next.status !== previous.status) {
+      setCounts((current) => ({
+        ...current,
+        [previous.status]: Math.max(0, current[previous.status] - 1),
+        [next.status]: current[next.status] + 1,
+      }))
+    }
   }
 
-  const saveCall = () => {
-    if (!selected) return
+  const saveCall = async () => {
+    if (!selected || saving) return
     if (!link.trim()) {
       toast.error('You have to give the meeting link yourself.')
       return
@@ -73,21 +107,80 @@ function VerificationRequestsPage() {
       toast.error('Pick a future date and time for the call.')
       return
     }
-    scheduleMemberCall(selected.id, link.trim(), buildCallTime(date, slot), note.trim())
-    toast.success('Video call scheduled. The user can now see the link and time you set.')
-    setLink('')
-    setNote('')
+    setSaving(true)
+    try {
+      const updated = await scheduleCall(selected.id, {
+        link: link.trim(),
+        time: buildCallTime(date, slot),
+        note: note.trim(),
+      })
+      applyUpdate(selected, updated)
+      toast.success('Video call scheduled. The user can now see the link and time you set.')
+      setLink('')
+      setNote('')
+    } catch (error) {
+      toast.error(errorMessage(error))
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const verifyMember = (member: AdminMember) => {
-    const blocked = approvalBlockReason(state, member.id)
-    if (blocked) {
-      toast.error(blocked)
+  const removeCall = async () => {
+    if (!selected || saving) return
+    setSaving(true)
+    try {
+      const updated = await clearCall(selected.id)
+      applyUpdate(selected, updated)
+      toast.success('Call removed from the user\'s page.')
+    } catch (error) {
+      toast.error(errorMessage(error))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const verifyMember = async (member: AdminMember) => {
+    if (saving) return
+    if (!member.callLink || !member.callTime) {
+      toast.error('Give the meeting link and time first - the user never picks their own slot.')
       setOpenId(member.id)
       return
     }
-    approveMember(member.id)
-    toast.success(`${member.name} verified.`)
+    setSaving(true)
+    try {
+      const updated = await approveRequest(member.id)
+      applyUpdate(member, updated)
+      toast.success(`${member.name} verified.`)
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 422 || error.status === 409)) {
+        toast.error(error.message)
+        setOpenId(member.id)
+      } else {
+        toast.error(errorMessage(error))
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const confirmRejection = async () => {
+    if (!selected || saving) return
+    if (rejectReason.trim().length < 10) {
+      toast.error('Write a clear reason of at least 10 characters.')
+      return
+    }
+    setSaving(true)
+    try {
+      const updated = await rejectRequest(selected.id, rejectReason.trim())
+      applyUpdate(selected, updated)
+      setRejecting(false)
+      setRejectReason('')
+      toast.success('Request rejected with a written reason.')
+    } catch (error) {
+      toast.error(errorMessage(error))
+    } finally {
+      setSaving(false)
+    }
   }
 
   const tabs: { key: Filter; label: string; count: number }[] = [
@@ -113,7 +206,9 @@ function VerificationRequestsPage() {
       </div>
 
       <SectionCard title={filter === 'pending' ? 'Pending requests' : filter === 'verified' ? 'Verified accounts' : 'Rejected requests'} subtitle="Open one to read the full form and schedule the verification video call.">
-        {list.length === 0 ? (
+        {loading ? (
+          <p className="text-sm text-slate-500">Loading requests…</p>
+        ) : list.length === 0 ? (
           <p className="text-sm text-slate-500">Nothing in this list.</p>
         ) : (
           <ul className="space-y-2">
@@ -143,7 +238,7 @@ function VerificationRequestsPage() {
                         Review
                       </ActionButton>
                       {member.status === 'pending' && (
-                        <ActionButton variant="emerald" onClick={() => verifyMember(member)} className="flex-1 sm:flex-none">
+                        <ActionButton variant="emerald" onClick={() => void verifyMember(member)} disabled={saving} className="flex-1 sm:flex-none">
                           Approve
                         </ActionButton>
                       )}
@@ -192,9 +287,9 @@ function VerificationRequestsPage() {
                   <ActionButton
                     variant="emerald"
                     onClick={() => {
-                      verifyMember(selected)
-                      setOpenId('')
+                      void verifyMember(selected).then(() => setOpenId(''))
                     }}
+                    disabled={saving}
                     className="sm:w-auto"
                   >
                     Approve account
@@ -261,16 +356,11 @@ function VerificationRequestsPage() {
                 <input className={inputClass} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Note for the user (optional)" />
               </div>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                <ActionButton onClick={saveCall} className="sm:w-auto">{selected.callLink ? 'Update schedule' : 'Schedule call'}</ActionButton>
+                <ActionButton onClick={() => void saveCall()} disabled={saving} className="sm:w-auto">
+                  {selected.callLink ? 'Update schedule' : 'Schedule call'}
+                </ActionButton>
                 {selected.callLink && (
-                  <ActionButton
-                    variant="ghost"
-                    onClick={() => {
-                      scheduleMemberCall(selected.id, '', '', '')
-                      toast.success('Call removed from the user\'s page.')
-                    }}
-                    className="sm:w-auto"
-                  >
+                  <ActionButton variant="ghost" onClick={() => void removeCall()} disabled={saving} className="sm:w-auto">
                     Clear
                   </ActionButton>
                 )}
@@ -287,20 +377,7 @@ function VerificationRequestsPage() {
                   placeholder="Which field could not be verified? The user sees this message."
                 />
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                  <ActionButton
-                    variant="rose"
-                    onClick={() => {
-                      if (rejectReason.trim().length < 10) {
-                        toast.error('Write a clear reason of at least 10 characters.')
-                        return
-                      }
-                      rejectMember(selected.id, rejectReason.trim())
-                      setRejecting(false)
-                      setRejectReason('')
-                      toast.success('Request rejected with a written reason.')
-                    }}
-                    className="sm:w-auto"
-                  >
+                  <ActionButton variant="rose" onClick={() => void confirmRejection()} disabled={saving} className="sm:w-auto">
                     Confirm rejection
                   </ActionButton>
                   <ActionButton variant="ghost" onClick={() => setRejecting(false)} className="sm:w-auto">

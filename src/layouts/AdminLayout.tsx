@@ -3,7 +3,10 @@ import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import Header from '../components/layout/Header'
 import AdminSidebar from '../components/admin/AdminSidebar'
-import { scopedCases, scopedMembers, scopedReports, scopedSuspensions, syncLocalRegistrations, useAdminConsole } from '../data/admin'
+import { ApiError } from '../api/client'
+import { fetchMe } from '../api/auth'
+import { listRequests } from '../api/verification'
+import { scopedCases, scopedReports, scopedSuspensions, useAdminConsole } from '../data/admin'
 import { signOut, useCurrentAdmin } from '../data/session'
 
 const pageMeta: Record<string, { title: string; description: string }> = {
@@ -20,17 +23,51 @@ function AdminLayout() {
   const state = useAdminConsole()
   const admin = useCurrentAdmin()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [queueCounts, setQueueCounts] = useState({ pendingRequests: 0, myUsers: 0 })
 
+  // Sidebar badges for the two API-backed pages.
   useEffect(() => {
-    syncLocalRegistrations()
+    let alive = true
+    void (async () => {
+      try {
+        const [pending, verified] = await Promise.all([
+          listRequests('pending', { limit: 1 }),
+          listRequests('verified', { limit: 1 }),
+        ])
+        if (alive) setQueueCounts({ pendingRequests: pending.total, myUsers: verified.total })
+      } catch {
+        // The pages surface their own API errors; the sidebar just stays at 0.
+      }
+    })()
+    return () => {
+      alive = false
+    }
   }, [])
+
+  // The session in localStorage is only a cache — the cookie decides.
+  useEffect(() => {
+    let alive = true
+    void (async () => {
+      try {
+        await fetchMe()
+      } catch (error) {
+        if (!alive) return
+        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+          signOut()
+          navigate('/login', { replace: true })
+        }
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [navigate])
 
   if (!admin) return <Navigate to="/login" replace />
 
-  const members = scopedMembers(state, admin)
   const counts = {
-    pendingRequests: members.filter((member) => member.status === 'pending').length,
-    myUsers: members.filter((member) => member.status === 'verified').length,
+    pendingRequests: queueCounts.pendingRequests,
+    myUsers: queueCounts.myUsers,
     openReports: scopedReports(state, admin).filter((report) => report.status !== 'closed').length,
     activeSuspensions: scopedSuspensions(state, admin).filter((item) => item.status === 'active').length,
   }

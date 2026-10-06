@@ -3,34 +3,44 @@ import PoliceLayout from '../layouts/PoliceLayout'
 import MyComplaintDetailPage from '../pages/public/MyComplaintDetailPage'
 import RegisterComplaintPage from '../pages/public/RegisterComplaintPage'
 import PoliceDashboard from '../pages/police/PoliceDashboard'
+import PoliceEditPage from '../pages/police/PoliceEditPage'
 import PoliceRegisterPage from '../pages/police/PoliceRegisterPage'
 import PoliceStatusPage from '../pages/police/PoliceStatusPage'
+import { RequireRole } from './guards'
 
-const policeRoutes: RouteObject[] = [{
-  path: 'police',
-  element: <PoliceLayout />,
-  children: [
-    { index: true, element: <Navigate to="dashboard" replace /> },
-    { path: 'dashboard', element: <PoliceDashboard /> },
-    { path: 'register', element: <PoliceRegisterPage /> },
-    { path: 'status', element: <PoliceStatusPage /> },
-    {
-      path: 'register-complaint',
-      element: (
-        <RegisterComplaintPage
-          backTo="/police/dashboard"
-          backLabel="Back to Police Portal"
-          redirectTo="/police/dashboard"
-          heading="Register a Complaint (Police Desk)"
-          description="Record a missing person complaint filed at your station. Attach the police complaint (FIR) copy — it is mandatory before the case is accepted."
-        />
-      ),
-    },
-    {
-      path: 'complaints/:id',
-      element: <MyComplaintDetailPage backTo="/police/dashboard" backLabel="Back to Police Portal" newComplaintTo="/police/register-complaint" />,
-    },
-  ],
-}]
+const policeRoutes: RouteObject[] = [
+  // Open: this is the sign-up form for people who do not have an account yet.
+  {
+    path: 'police/register',
+    element: <PoliceLayout />,
+    children: [{ index: true, element: <PoliceRegisterPage /> }],
+  },
+  {
+    path: 'police',
+    element: <RequireRole role="police"><PoliceLayout /></RequireRole>,
+    children: [
+      { index: true, element: <Navigate to="dashboard" replace /> },
+      { path: 'dashboard', element: <PoliceDashboard /> },
+      { path: 'status', element: <PoliceStatusPage /> },
+      { path: 'edit', element: <PoliceEditPage /> },
+      {
+        path: 'register-complaint',
+        element: (
+          <RegisterComplaintPage
+            backTo="/police/dashboard"
+            backLabel="Back to Police Portal"
+            redirectTo="/police/dashboard"
+            heading="Register a Complaint (Police Desk)"
+            description="Record a missing person complaint filed at your station. Attach the police complaint (FIR) copy — it is mandatory before the case is accepted."
+          />
+        ),
+      },
+      {
+        path: 'complaints/:id',
+        element: <MyComplaintDetailPage backTo="/police/dashboard" backLabel="Back to Police Portal" newComplaintTo="/police/register-complaint" />,
+      },
+    ],
+  },
+]
 
 export default policeRoutes
