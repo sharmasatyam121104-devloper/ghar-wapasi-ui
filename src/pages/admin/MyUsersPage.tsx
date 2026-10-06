@@ -335,7 +335,7 @@ function MyUsersPage() {
           <label className="block">
             <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Note</span>
             <textarea
-              className={`${inputClass} mt-2 min-h-[90px] resize-y`}
+              className={`${inputClass} mt-2 min-h-22.5 resize-y`}
               value={outcomeNote}
               onChange={(event) => setOutcomeNote(event.target.value)}
               placeholder="Where the person was found and who took custody, or why the case could not be closed."

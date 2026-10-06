@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ConsentCheckbox, Field, PhotoUpload, SelectInput, TextAreaInput, TextInput } from '../../components/common/FormControls'
 import SearchableSelect from '../../components/common/SearchableSelect'
 import { indianStates, ngoOrgTypes } from '../../data/options'
 import { registerNgoRequest } from '../../api/auth'
 import { ApiError } from '../../api/client'
-import { establishSession, useSession } from '../../data/session'
+import { establishSession } from '../../data/session'
 
 const steps = [
   { id: 1, title: 'Organisation' },
@@ -66,7 +66,6 @@ const emptyForm: NgoFormState = {
 
 function NgoRegisterPage() {
   const navigate = useNavigate()
-  const session = useSession()
 
   const [form, setForm] = useState<NgoFormState>(emptyForm)
   const [step, setStep] = useState(1)
@@ -184,9 +183,6 @@ function NgoRegisterPage() {
       setBusy(false)
     }
   }
-
-  // A signed-in NGO edits through the restricted edit form instead.
-  if (session?.role === 'ngo') return <Navigate to="/ngo/edit" replace />
 
   const reviewSections: { title: string; rows: [string, string][] }[] = [
     {

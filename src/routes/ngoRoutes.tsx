@@ -5,14 +5,15 @@ import NgoDashboard from '../pages/ngo/NgoDashboard'
 import NgoEditPage from '../pages/ngo/NgoEditPage'
 import NgoRegisterPage from '../pages/ngo/NgoRegisterPage'
 import NgoStatusPage from '../pages/ngo/NgoStatusPage'
-import { RequireRole } from './guards'
+import { RequireGuest, RequireRole } from './guards'
 
 const ngoRoutes: RouteObject[] = [
-  // Open: this is the sign-up form for organisations without an account yet.
+  // Sign-up form: guests open it directly, signed-in members get the
+  // logout dialog first (RequireGuest).
   {
     path: 'ngo/register',
     element: <NgoLayout />,
-    children: [{ index: true, element: <NgoRegisterPage /> }],
+    children: [{ index: true, element: <RequireGuest><NgoRegisterPage /></RequireGuest> }],
   },
   {
     path: 'ngo',

@@ -177,6 +177,13 @@ function SignupPage() {
                 Already have an account?{' '}
                 <button type="button" onClick={() => navigate('/login')} className="font-bold text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">Log in</button>
               </p>
+
+              <p className="text-center text-xs leading-5 text-slate-400">
+                Registering a police station or NGO?{' '}
+                <button type="button" onClick={() => navigate('/police/register')} className="font-bold text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">Police sign-up</button>
+                {' · '}
+                <button type="button" onClick={() => navigate('/ngo/register')} className="font-bold text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">NGO sign-up</button>
+              </p>
             </form>
           </div>
         </div>

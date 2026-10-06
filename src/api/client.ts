@@ -34,8 +34,8 @@ export interface ApiEnvelope<T> {
   errors?: Record<string, string>
 }
 
-const http = axios.create({ baseURL: '/api', withCredentials: true, timeout: 15000 })
-const refreshHttp = axios.create({ baseURL: '/api', withCredentials: true, timeout: 15000 })
+const http = axios.create({ baseURL: 'http://localhost:8080/api', withCredentials: true, timeout: 15000 })
+const refreshHttp = axios.create({ baseURL: 'http://localhost:8080/api', withCredentials: true, timeout: 15000 })
 
 let refreshInFlight: Promise<boolean> | null = null
 

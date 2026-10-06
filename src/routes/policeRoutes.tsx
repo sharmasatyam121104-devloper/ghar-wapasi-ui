@@ -6,14 +6,15 @@ import PoliceDashboard from '../pages/police/PoliceDashboard'
 import PoliceEditPage from '../pages/police/PoliceEditPage'
 import PoliceRegisterPage from '../pages/police/PoliceRegisterPage'
 import PoliceStatusPage from '../pages/police/PoliceStatusPage'
-import { RequireRole } from './guards'
+import { RequireGuest, RequireRole } from './guards'
 
 const policeRoutes: RouteObject[] = [
-  // Open: this is the sign-up form for people who do not have an account yet.
+  // Sign-up form: guests open it directly, signed-in members get the
+  // logout dialog first (RequireGuest).
   {
     path: 'police/register',
     element: <PoliceLayout />,
-    children: [{ index: true, element: <PoliceRegisterPage /> }],
+    children: [{ index: true, element: <RequireGuest><PoliceRegisterPage /></RequireGuest> }],
   },
   {
     path: 'police',

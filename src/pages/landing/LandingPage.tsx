@@ -115,6 +115,8 @@ function LandingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
           <Logo />
           <nav className="flex items-center gap-2 sm:gap-3" aria-label="Main navigation">
+            <button type="button" onClick={() => navigate('/police/register')} className="hidden rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-brand-50 hover:text-brand-700 sm:inline-flex dark:hover:text-brand-300">Police</button>
+            <button type="button" onClick={() => navigate('/ngo/register')} className="hidden rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-brand-50 hover:text-brand-700 sm:inline-flex dark:hover:text-brand-300">NGO</button>
             <button type="button" onClick={() => navigate('/login')} className="hidden rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-brand-50 hover:text-brand-700 sm:inline-flex dark:hover:text-brand-300">Login</button>
             <button type="button" onClick={() => navigate('/signup')} className="rounded-xl bg-brand-600 px-3 py-2 text-sm font-bold text-white hover:bg-brand-700 sm:px-5">Sign Up</button>
             <ThemeToggle />
@@ -354,6 +356,8 @@ function LandingPage() {
                   Create Your Account
                   <svg className="ml-2 inline-block h-3.5 w-3.5 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
                 </button>
+                <button type="button" onClick={() => navigate('/police/register')} className="rounded-xl border border-slate-200 bg-surface px-6 py-3 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300">Register as Police</button>
+                <button type="button" onClick={() => navigate('/ngo/register')} className="rounded-xl border border-slate-200 bg-surface px-6 py-3 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300">Register as NGO</button>
                 <button type="button" onClick={() => notify('Photo Search')} className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300">Search by Photo</button>
               </div>
             </div>

@@ -115,6 +115,13 @@ function LoginPage() {
               New to Ghar Wapasi?{' '}
               <button type="button" onClick={() => navigate('/signup')} className="font-bold text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">Create an account</button>
             </p>
+
+            <p className="text-center text-sm text-slate-500">
+              Registering your station or organisation?{' '}
+              <button type="button" onClick={() => navigate('/police/register')} className="font-bold text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">Police sign-up</button>
+              {' · '}
+              <button type="button" onClick={() => navigate('/ngo/register')} className="font-bold text-brand-700 hover:text-brand-800 dark:text-brand-300 dark:hover:text-brand-200">NGO sign-up</button>
+            </p>
           </form>
         </div>
       </main>
