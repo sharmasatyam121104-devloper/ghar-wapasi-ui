@@ -1,7 +1,9 @@
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import StatusBadge from '../../components/common/StatusBadge'
-import { getInitials, maskAadhaar, matchDeadline, myComplaints } from '../../data/myComplaints'
+import { updateComplaint, useComplaint } from '../../data/complaints'
+import { getInitials, maskAadhaar, matchDeadline } from '../../data/myComplaints'
+import { useSession } from '../../data/session'
 
 function Card({ title, subtitle, children }: { title?: string; subtitle?: string; children: React.ReactNode }) {
   return (
@@ -36,18 +38,33 @@ function MyComplaintDetailPage({
   showNewComplaint = true,
 }: MyComplaintDetailPageProps) {
   const { id } = useParams()
+  const session = useSession()
+  const { complaint, loading, error, reload } = useComplaint(id)
   const notify = (feature: string) => toast.success(`${feature} — Demo only. Full flow coming soon.`)
 
-  const complaint = myComplaints.find((c) => String(c.id) === id)
+  if (loading) {
+    return <p className="text-sm font-semibold text-slate-500">Loading the case…</p>
+  }
 
   if (!complaint) {
     return (
       <section className="rounded-2xl border border-slate-200/80 bg-surface p-10 text-center shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-slate-900">Case not found</h1>
-        <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">We could not locate a complaint matching this reference.</p>
+        <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">{error ?? 'We could not locate a complaint matching this reference.'}</p>
         <Link to={backTo} className="mt-6 inline-block rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700">Back to My Complaints</Link>
       </section>
     )
+  }
+
+  const isOwner = session?.id === complaint.createdBy
+  const updateCase = async (status: 'active' | 'matched' | 'resolved') => {
+    try {
+      await updateComplaint(complaint.id, { status })
+      toast.success('Case updated.')
+      reload()
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : 'Could not update the case.')
+    }
   }
 
   const personsLabel = complaint.age > 0 ? `${complaint.age} years · ${complaint.gender}` : complaint.gender
@@ -112,73 +129,85 @@ function MyComplaintDetailPage({
             </dl>
           </Card>
 
-          <Card title="Complainant (You)">
-            <dl className="mt-4 divide-y divide-slate-200/80">
-              <Row label="Full Name" value={complaint.complainantName} />
-              <Row label="Relation" value={complaint.complainantRelation} />
-              <Row label="Aadhaar" value={maskAadhaar(complaint.complainantAadhaar)} />
-              <Row label="Mobile" value={`+91 ${complaint.complainantMobile}`} />
-              <Row label="Address" value={complaint.complainantAddress} />
-            </dl>
-          </Card>
+          {complaint.full ? (
+            <>
+              <Card title="Complainant (You)">
+                <dl className="mt-4 divide-y divide-slate-200/80">
+                  <Row label="Full Name" value={complaint.complainantName} />
+                  <Row label="Relation" value={complaint.complainantRelation} />
+                  <Row label="Aadhaar" value={maskAadhaar(complaint.complainantAadhaar)} />
+                  <Row label="Mobile" value={`+91 ${complaint.complainantMobile}`} />
+                  <Row label="Address" value={complaint.complainantAddress} />
+                </dl>
+              </Card>
 
-          <Card title="Second Family Member" subtitle="An alternate contact who can act on this case.">
-            <dl className="mt-4 divide-y divide-slate-200/80">
-              <Row label="Full Name" value={complaint.memberName} />
-              <Row label="Relation" value={complaint.memberRelation} />
-              <Row label="Aadhaar" value={maskAadhaar(complaint.memberAadhaar)} />
-              <Row label="Mobile" value={`+91 ${complaint.memberMobile}`} />
-            </dl>
-          </Card>
+              <Card title="Second Family Member" subtitle="An alternate contact who can act on this case.">
+                <dl className="mt-4 divide-y divide-slate-200/80">
+                  <Row label="Full Name" value={complaint.memberName} />
+                  <Row label="Relation" value={complaint.memberRelation} />
+                  <Row label="Aadhaar" value={maskAadhaar(complaint.memberAadhaar)} />
+                  <Row label="Mobile" value={`+91 ${complaint.memberMobile}`} />
+                </dl>
+              </Card>
 
-          <Card title="Police Complaint">
-            <dl className="mt-4 divide-y divide-slate-200/80">
-              <Row label="Police Station" value={complaint.policeStation} />
-              <Row label="FIR / Complaint No." value={complaint.firNumber} />
-              <Row label="FIR Date" value={complaint.firDate} />
-            </dl>
-          </Card>
+              <Card title="Police Complaint">
+                <dl className="mt-4 divide-y divide-slate-200/80">
+                  <Row label="Police Station" value={complaint.policeStation} />
+                  <Row label="FIR / Complaint No." value={complaint.firNumber} />
+                  <Row label="FIR Date" value={complaint.firDate} />
+                </dl>
+              </Card>
 
-          <Card title="Documents" subtitle="Proofs submitted with this complaint.">
-            <ul className="mt-4 space-y-2">
-              {documents.map((doc) => (
-                <li key={doc.label} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl border border-slate-200 bg-canvas px-4 py-3">
-                  <span className="inline-flex items-center gap-2.5 text-sm font-semibold text-slate-700">
-                    <span className={`grid h-5 w-5 place-items-center rounded-full text-white ${doc.ok ? 'bg-emerald-500' : 'bg-slate-300'}`} aria-hidden="true">
-                      {doc.ok ? (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="m5 13 4 4L19 7" /></svg>
-                      ) : (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6 6 18M6 6l12 12" /></svg>
-                      )}
-                    </span>
-                    {doc.label}
-                  </span>
-                  <span className={`text-xs font-bold ${doc.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>{doc.value}</span>
-                </li>
-              ))}
-            </ul>
-          </Card>
+              <Card title="Documents" subtitle="Proofs submitted with this complaint.">
+                <ul className="mt-4 space-y-2">
+                  {documents.map((doc) => (
+                    <li key={doc.label} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl border border-slate-200 bg-canvas px-4 py-3">
+                      <span className="inline-flex items-center gap-2.5 text-sm font-semibold text-slate-700">
+                        <span className={`grid h-5 w-5 place-items-center rounded-full text-white ${doc.ok ? 'bg-emerald-500' : 'bg-slate-300'}`} aria-hidden="true">
+                          {doc.ok ? (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="m5 13 4 4L19 7" /></svg>
+                          ) : (
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                          )}
+                        </span>
+                        {doc.label}
+                      </span>
+                      <span className={`text-xs font-bold ${doc.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>{doc.value}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </>
+          ) : (
+            <Card title="Limited view" subtitle="Some details are private to the person who filed this complaint.">
+              <p className="mt-3 text-sm leading-6 text-slate-500">
+                Contact numbers, addresses, Aadhaar numbers and the uploaded ID/FIR documents are visible only to the complainant and the admin who verified them. The registry still shows everything needed to help identify and reunite this person.
+              </p>
+            </Card>
+          )}
 
-          <Card title="Case Actions" subtitle="Keep this complaint up to date so authorities and community members have the latest information.">
-            {deadlineInfo &&
-              (deadlineInfo.daysLeft >= 0 ? (
-                <div className="mt-5 rounded-xl border border-amber-200/80 bg-amber-50 p-4 text-sm leading-6 text-amber-800 dark:border-amber-400/30 dark:bg-amber-950/40 dark:text-amber-200">
-                  This person has been found. The case status must be updated within <span className="font-bold">2 days</span> — deadline <span className="font-bold">{deadlineInfo.deadline}</span>
-                  {deadlineInfo.daysLeft === 0 ? ' (today).' : ` · ${deadlineInfo.daysLeft} day(s) left.`}
-                </div>
-              ) : (
-                <div className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-700 dark:border-rose-400/30 dark:bg-rose-950/30 dark:text-rose-300">
-                  Status update is <span className="font-bold">overdue</span> by {Math.abs(deadlineInfo.daysLeft)} day(s). A matched case must be updated within 2 days — please change the status now.
-                </div>
-              ))}
-            <div className="mt-5 flex flex-wrap gap-3">
-              <button type="button" onClick={() => notify('Case Update')} className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">Update Case</button>
-              {complaint.status !== 'Resolved' && (
-                <button type="button" onClick={() => notify('Mark Resolved')} className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300">Mark as Resolved</button>
-              )}
-              <button type="button" onClick={() => notify('Share With Police')} className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300">Share with Police</button>
-            </div>
-          </Card>
+          {isOwner && (
+            <Card title="Case Actions" subtitle="Keep this complaint up to date so authorities and community members have the latest information.">
+              {deadlineInfo &&
+                (deadlineInfo.daysLeft >= 0 ? (
+                  <div className="mt-5 rounded-xl border border-amber-200/80 bg-amber-50 p-4 text-sm leading-6 text-amber-800 dark:border-amber-400/30 dark:bg-amber-950/40 dark:text-amber-200">
+                    This person has been found. The case status must be updated within <span className="font-bold">2 days</span> — deadline <span className="font-bold">{deadlineInfo.deadline}</span>
+                    {deadlineInfo.daysLeft === 0 ? ' (today).' : ` · ${deadlineInfo.daysLeft} day(s) left.`}
+                  </div>
+                ) : (
+                  <div className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-700 dark:border-rose-400/30 dark:bg-rose-950/30 dark:text-rose-300">
+                    Status update is <span className="font-bold">overdue</span> by {Math.abs(deadlineInfo.daysLeft)} day(s). A matched case must be updated within 2 days — please change the status now.
+                  </div>
+                ))}
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button type="button" onClick={() => notify('Case Update')} className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">Update Case</button>
+                {complaint.status !== 'Resolved' && (
+                  <button type="button" onClick={() => void updateCase('resolved')} className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300">Mark as Resolved</button>
+                )}
+                <button type="button" onClick={() => notify('Share With Police')} className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300">Share with Police</button>
+              </div>
+            </Card>
+          )}
         </div>
 
         <section className="h-fit rounded-2xl border border-slate-200/80 bg-surface p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-6">

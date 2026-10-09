@@ -7,6 +7,8 @@ export type UserRole = 'public' | 'police' | 'ngo' | 'admin'
 
 export interface Session {
   role: UserRole
+  /** The signed-in account's Mongo id, used to tell "mine" from "someone else's". */
+  id: string
   name: string
   identifier: string
   adminId: string
@@ -35,7 +37,8 @@ function read(): Session | null {
     const raw = localStorage.getItem(SESSION_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as Session
-    return parsed && ROLE_HOME[parsed.role] ? parsed : null
+    if (!parsed || !ROLE_HOME[parsed.role]) return null
+    return { ...parsed, id: parsed.id ?? '' }
   } catch {
     return null
   }
@@ -88,6 +91,7 @@ function sessionFromUser(user: ApiUser, fallbackIdentifier: string): Session {
   const role = toUserRole(user.role)
   const next: Session = {
     role,
+    id: user.id || '',
     name: user.name || fallbackIdentifier,
     identifier: user.identifier || fallbackIdentifier,
     adminId: user.adminId || '',

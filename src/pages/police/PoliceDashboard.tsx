@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import StatusBadge from '../../components/common/StatusBadge'
-import { getInitials, myComplaints } from '../../data/myComplaints'
+import { useComplaints } from '../../data/complaints'
+import { getInitials } from '../../data/myComplaints'
 import { useMe } from '../../data/useMe'
 
 function formatCallTime(value?: string): string {
@@ -18,6 +19,7 @@ const statusLabel: Record<string, string> = {
 
 function PoliceDashboard() {
   const { me, loading, error } = useMe()
+  const { complaints } = useComplaints()
 
   if (loading) {
     return <p className="text-sm font-semibold text-slate-500">Loading the police portal…</p>
@@ -68,10 +70,10 @@ function PoliceDashboard() {
   }
 
   const counts = {
-    total: myComplaints.length,
-    active: myComplaints.filter((c) => c.status === 'Active').length,
-    matched: myComplaints.filter((c) => c.status === 'Matched').length,
-    resolved: myComplaints.filter((c) => c.status === 'Resolved').length,
+    total: complaints.length,
+    active: complaints.filter((c) => c.status === 'Active').length,
+    matched: complaints.filter((c) => c.status === 'Matched').length,
+    resolved: complaints.filter((c) => c.status === 'Resolved').length,
   }
 
   const summary = [
@@ -120,7 +122,7 @@ function PoliceDashboard() {
       <div>
         <h2 className="mb-3 font-display text-lg font-extrabold tracking-tight text-slate-900">Registered Complaints</h2>
         <div className="grid gap-5 md:grid-cols-2">
-          {myComplaints.map((complaint) => (
+          {complaints.map((complaint) => (
             <Link
               key={complaint.id}
               to={`/police/complaints/${complaint.id}`}

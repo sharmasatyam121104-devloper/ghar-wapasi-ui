@@ -1,10 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { ApiError } from '../../api/client'
+import { submitComplaint, type FilingRole } from '../../data/complaints'
 import { ConsentCheckbox, Field, OtpBlock, PhotoUpload, SelectInput, TextAreaInput, TextInput } from '../../components/common/FormControls'
 import SearchableSelect from '../../components/common/SearchableSelect'
 import { genderOptions, indianCities, indianLanguages, relationOptions } from '../../data/options'
-import { registerComplaint } from '../../data/myComplaints'
+import { useSession } from '../../data/session'
+import { formatFieldErrors } from '../../utils/forms'
 
 const DEMO_OTP = '123456'
 
@@ -126,6 +129,9 @@ function RegisterComplaintPage({
   const [memberVerified, setMemberVerified] = useState(false)
 
   const navigate = useNavigate()
+  const session = useSession()
+  const role: FilingRole = session?.role === 'police' || session?.role === 'ngo' ? session.role : 'public'
+  const [busy, setBusy] = useState(false)
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((prev) => ({ ...prev, [key]: value }))
 
@@ -220,7 +226,7 @@ function RegisterComplaintPage({
     }
   }
 
-  const submit = () => {
+  const submit = async () => {
     const allErrors = [1, 2, 3, 4, 5].flatMap((current) => validateStep(current))
     const uniqueErrors = [...new Set(allErrors)]
     if (uniqueErrors.length > 0) {
@@ -230,41 +236,62 @@ function RegisterComplaintPage({
       toast.error('Some required details are missing.')
       return
     }
-    const newId = registerComplaint({
-      personName: form.personName,
-      age: Number(form.personAge) || 0,
-      gender: form.personGender,
-      height: form.personHeight,
-      build: form.personBuild,
-      marks: form.personMarks,
-      clothing: form.personClothing,
-      medicalNotes: form.personMedical,
-      languages: form.personLanguages,
-      lastSeenDate: form.lastSeenDate,
-      lastSeenTime: form.lastSeenTime,
-      lastSeen: form.lastSeenPlace,
-      area: form.lastSeenCity,
-      locality: form.lastSeenArea,
-      circumstances: form.circumstances,
-      complainantName: form.complainantName,
-      complainantRelation: form.complainantRelation,
-      complainantAadhaar: form.complainantAadhaar,
-      complainantMobile: form.complainantMobile,
-      complainantAddress: form.complainantAddress,
-      memberName: form.memberName,
-      memberRelation: form.memberRelation,
-      memberAadhaar: form.memberAadhaar,
-      memberMobile: form.memberMobile,
-      policeStation: form.policeStation,
-      firNumber: form.firNumber,
-      firDate: form.firDate,
-      personPhotos: personPhotos.length,
-      hasComplainantId: complainantIdFile.length > 0,
-      hasMemberId: memberIdFile.length > 0,
-      hasFirCopy: firCopy.length > 0,
-    })
-    toast.success('Complaint registered successfully.')
-    navigate(redirectTo ?? `/public/my-complaints/${newId}`)
+
+    setBusy(true)
+    try {
+      const complaint = await submitComplaint(
+        role,
+        {
+          person_name: form.personName,
+          person_age: Number(form.personAge) || 0,
+          person_gender: form.personGender,
+          person_height: form.personHeight,
+          person_build: form.personBuild,
+          person_marks: form.personMarks,
+          person_clothing: form.personClothing,
+          person_medical_notes: form.personMedical,
+          person_languages: form.personLanguages,
+          last_seen_date: form.lastSeenDate,
+          last_seen_time: form.lastSeenTime,
+          last_seen_place: form.lastSeenPlace,
+          last_seen_city: form.lastSeenCity,
+          last_seen_area: form.lastSeenArea,
+          circumstances: form.circumstances,
+          complainant_name: form.complainantName,
+          complainant_relation: form.complainantRelation,
+          complainant_aadhaar: form.complainantAadhaar,
+          complainant_mobile: form.complainantMobile,
+          complainant_address: form.complainantAddress,
+          member_name: form.memberName,
+          member_relation: form.memberRelation,
+          member_aadhaar: form.memberAadhaar,
+          member_mobile: form.memberMobile,
+          police_station: form.policeStation,
+          fir_number: form.firNumber,
+          fir_date: form.firDate,
+        },
+        {
+          personPhotos,
+          locationPhotos,
+          complainantIdFiles: complainantIdFile,
+          memberIdFiles: memberIdFile,
+          firCopyFiles: firCopy,
+        },
+      )
+      toast.success('Complaint registered successfully.')
+      navigate(redirectTo ?? `/public/my-complaints/${complaint.id}`)
+    } catch (error) {
+      if (error instanceof ApiError && error.errors) {
+        setErrors(formatFieldErrors(error.errors))
+        setStep(1)
+        scrollTop()
+        toast.error('Some details were rejected. Please review the highlighted fields.')
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Could not register the complaint.')
+      }
+    } finally {
+      setBusy(false)
+    }
   }
 
   const priority = priorityLabels(form)
@@ -596,8 +623,8 @@ function RegisterComplaintPage({
               Continue
             </button>
           ) : (
-            <button type="button" onClick={submit} className="flex-1 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700 sm:flex-none">
-              Submit Complaint
+            <button type="button" onClick={() => void submit()} disabled={busy} className="flex-1 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none">
+              {busy ? 'Submitting…' : 'Submit Complaint'}
             </button>
           )}
         </div>
