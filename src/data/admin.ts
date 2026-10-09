@@ -14,6 +14,31 @@ export interface AdminAccount {
   createdAt: number
 }
 
+/** The role-specific service/organisation fields an admin reviews. */
+export interface MemberProfileDetails {
+  rank?: string
+  badge_number?: string
+  station_name?: string
+  district?: string
+  state?: string
+  official_email?: string
+  employee_id?: string
+  joining_date?: string
+  reporting_officer?: string
+  reporting_officer_contact?: string
+  org_name?: string
+  org_type?: string
+  reg_number?: string
+  address?: string
+  city?: string
+  contact_person?: string
+  designation?: string
+  contact_mobile?: string
+  contact_email?: string
+  website?: string
+  contact_aadhaar?: string
+}
+
 export interface AdminMember {
   id: string
   assignedAdminId: string
@@ -26,6 +51,10 @@ export interface AdminMember {
   location: string
   mobile: string
   email: string
+  /** Member's own Aadhaar, masked by the server. */
+  aadhaar?: string
+  /** Full submitted form - raw file paths are kept separately in `documents`. */
+  profile?: MemberProfileDetails
   documents: string[]
   status: MemberStatus
   submittedAt: number

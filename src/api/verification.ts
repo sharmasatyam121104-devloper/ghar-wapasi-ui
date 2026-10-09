@@ -1,5 +1,5 @@
 import { apiFetch } from './client'
-import type { AdminMember, MemberStatus } from '../data/admin'
+import type { AdminMember, MemberProfileDetails, MemberStatus } from '../data/admin'
 
 export type VerificationStatus = MemberStatus
 
@@ -13,6 +13,10 @@ export interface VerificationRecord {
   mobile: string
   adminId: string
   verification_status: VerificationStatus
+  /** Masked member Aadhaar. */
+  aadhaar: string
+  /** Role-specific details (no raw file paths; those are in `documents`). */
+  profile?: MemberProfileDetails
   state: string
   location: string
   organisation: string
@@ -95,6 +99,8 @@ export function toAdminMember(record: VerificationRecord): AdminMember {
     location: record.location,
     mobile: record.mobile,
     email: record.email,
+    aadhaar: record.aadhaar ?? '',
+    profile: record.profile ?? {},
     documents: record.documents ?? [],
     status: record.status,
     submittedAt: record.submitted_at ? Date.parse(record.submitted_at) || Date.now() : Date.now(),

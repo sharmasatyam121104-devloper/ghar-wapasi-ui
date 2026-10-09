@@ -6,6 +6,7 @@ import SearchableSelect from '../../components/common/SearchableSelect'
 import { indianStates, ngoOrgTypes } from '../../data/options'
 import { registerNgoRequest } from '../../api/auth'
 import { ApiError } from '../../api/client'
+import { uploadFiles } from '../../api/files'
 import { establishSession } from '../../data/session'
 
 const steps = [
@@ -17,14 +18,6 @@ const steps = [
 ]
 
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024
-
-const toDataUrl = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.onerror = () => reject(reader.error ?? new Error('Could not read the photo.'))
-    reader.readAsDataURL(file)
-  })
 
 interface NgoFormState {
   orgName: string
@@ -142,8 +135,9 @@ function NgoRegisterPage() {
     const [first, ...rest] = form.contactPerson.trim().split(/\s+/).filter(Boolean)
     setBusy(true)
     try {
-      const regFiles = await Promise.all(regCertificate.map(toDataUrl))
-      const photoFiles = await Promise.all(orgPhoto.map(toDataUrl))
+      const uploaded = await uploadFiles([...regCertificate, ...orgPhoto])
+      const registrationUploads = uploaded.slice(0, regCertificate.length).map((file) => file.ref)
+      const photoUploads = uploaded.slice(regCertificate.length).map((file) => file.ref)
       const result = await registerNgoRequest({
         first_name: first,
         last_name: rest.join(' '),
@@ -165,8 +159,8 @@ function NgoRegisterPage() {
           contact_email: form.contactEmail.trim(),
           website: form.website.trim(),
           contact_aadhaar: form.contactAadhaar,
-          reg_certificate_files: regFiles,
-          org_photo_files: photoFiles,
+          reg_certificate_uploads: registrationUploads,
+          org_photo_uploads: photoUploads,
         },
       })
       establishSession(result.user, form.contactMobile)

@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import AdminModal from '../../components/admin/AdminModal'
 import { ActionButton, ConsoleStat, DetailRow, Pill, SectionCard } from '../../components/admin/AdminUi'
 import { filterChipClass } from '../../components/admin/adminStyles'
+import FilePreview from '../../components/common/FilePreview'
 import { inputClass } from '../../components/common/formStyles'
 import { errorMessage, ApiError } from '../../api/client'
 import {
@@ -24,6 +25,47 @@ const ZERO_COUNTS: Record<Filter, number> = { pending: 0, verified: 0, rejected:
 
 function nowMs() {
   return Date.now()
+}
+
+function formatDate(value?: string): string {
+  if (!value) return ''
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+/** Every role-specific field the member submitted, empties dropped. */
+function detailRows(member: AdminMember): Array<[string, string]> {
+  const profile = member.profile ?? {}
+  const rows: Array<[string, string | undefined]> =
+    member.role === 'police'
+      ? [
+          ['Rank / designation', profile.rank],
+          ['Badge / belt number', profile.badge_number],
+          ['Police station', profile.station_name],
+          ['District', profile.district],
+          ['State', profile.state],
+          ['Official email', profile.official_email],
+          ['Employee / service no.', profile.employee_id],
+          ['Date of joining', formatDate(profile.joining_date)],
+          ['Reporting officer', profile.reporting_officer],
+          ['Reporting officer contact', profile.reporting_officer_contact],
+        ]
+      : [
+          ['Organisation name', profile.org_name],
+          ['Organisation type', profile.org_type],
+          ['Registration / 12A no.', profile.reg_number],
+          ['Address', profile.address],
+          ['State', profile.state],
+          ['District', profile.district],
+          ['City / town', profile.city],
+          ['Contact person', profile.contact_person],
+          ['Designation', profile.designation],
+          ['Contact mobile', profile.contact_mobile],
+          ['Contact email', profile.contact_email],
+          ['Website', profile.website],
+          ['Contact Aadhaar (masked)', profile.contact_aadhaar],
+        ]
+  return rows.filter((row): row is [string, string] => Boolean(row[1]?.trim()))
 }
 
 function VerificationRequestsPage() {
@@ -310,21 +352,31 @@ function VerificationRequestsPage() {
               <DetailRow label="Location" value={selected.location} />
               <DetailRow label="Mobile" value={selected.mobile || '—'} />
               <DetailRow label="Email" value={selected.email || '—'} />
+              <DetailRow label="Aadhaar" value={selected.aadhaar || '—'} />
               <DetailRow label="Applied" value={timeAgo(selected.submittedAt)} />
             </dl>
+
+            {detailRows(selected).length > 0 && (
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Submitted details</p>
+                <dl className="mt-2 space-y-3 rounded-xl border border-slate-200/80 bg-canvas p-4">
+                  {detailRows(selected).map(([label, value]) => (
+                    <DetailRow key={label} label={label} value={value} />
+                  ))}
+                </dl>
+              </div>
+            )}
 
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Documents submitted</p>
               {selected.documents.length === 0 ? (
                 <p className="mt-2 text-sm text-slate-500">No document was uploaded with this request.</p>
               ) : (
-                <ul className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap gap-2">
                   {selected.documents.map((doc) => (
-                    <li key={doc} className="rounded-full border border-slate-200 bg-canvas px-3 py-1.5 text-xs font-semibold text-slate-600">
-                      {doc}
-                    </li>
+                    <FilePreview key={doc} path={doc} />
                   ))}
-                </ul>
+                </div>
               )}
             </div>
 
