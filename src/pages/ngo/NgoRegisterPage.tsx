@@ -8,6 +8,7 @@ import { registerNgoRequest } from '../../api/auth'
 import { ApiError } from '../../api/client'
 import { uploadFiles } from '../../api/files'
 import { establishSession } from '../../data/session'
+import { formatFieldErrors, splitFullName } from '../../utils/forms'
 
 const steps = [
   { id: 1, title: 'Organisation' },
@@ -132,15 +133,15 @@ function NgoRegisterPage() {
       return
     }
 
-    const [first, ...rest] = form.contactPerson.trim().split(/\s+/).filter(Boolean)
+    const { first_name, last_name } = splitFullName(form.contactPerson)
     setBusy(true)
     try {
       const uploaded = await uploadFiles([...regCertificate, ...orgPhoto])
       const registrationUploads = uploaded.slice(0, regCertificate.length).map((file) => file.ref)
       const photoUploads = uploaded.slice(regCertificate.length).map((file) => file.ref)
       const result = await registerNgoRequest({
-        first_name: first,
-        last_name: rest.join(' '),
+        first_name,
+        last_name,
         aadhaar: form.contactAadhaar,
         mobile: form.contactMobile,
         email: form.contactEmail.trim(),
@@ -168,7 +169,7 @@ function NgoRegisterPage() {
       navigate('/ngo/status', { replace: true })
     } catch (error) {
       if (error instanceof ApiError && error.errors) {
-        setErrors([...new Set(Object.values(error.errors).filter(Boolean))])
+        setErrors(formatFieldErrors(error.errors))
         toast.error('Some details were rejected. Please review the highlighted fields.')
       } else {
         toast.error(error instanceof Error ? error.message : 'Registration failed.')

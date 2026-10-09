@@ -8,6 +8,7 @@ import { registerPoliceRequest } from '../../api/auth'
 import { ApiError } from '../../api/client'
 import { uploadFiles } from '../../api/files'
 import { establishSession } from '../../data/session'
+import { formatFieldErrors, splitFullName } from '../../utils/forms'
 
 const steps = [
   { id: 1, title: 'Officer Identity' },
@@ -140,15 +141,15 @@ function PoliceRegisterPage() {
       return
     }
 
-    const [first, ...rest] = form.fullName.trim().split(/\s+/).filter(Boolean)
+    const { first_name, last_name } = splitFullName(form.fullName)
     setBusy(true)
     try {
       const uploaded = await uploadFiles([...idCard, ...appointmentProof])
       const idCardUploads = uploaded.slice(0, idCard.length).map((file) => file.ref)
       const appointmentUploads = uploaded.slice(idCard.length).map((file) => file.ref)
       const result = await registerPoliceRequest({
-        first_name: first,
-        last_name: rest.join(' '),
+        first_name,
+        last_name,
         aadhaar: form.aadhaar,
         mobile: form.mobile,
         email: form.officialEmail.trim(),
@@ -173,7 +174,7 @@ function PoliceRegisterPage() {
       navigate('/police/status', { replace: true })
     } catch (error) {
       if (error instanceof ApiError && error.errors) {
-        setErrors([...new Set(Object.values(error.errors).filter(Boolean))])
+        setErrors(formatFieldErrors(error.errors))
         toast.error('Some details were rejected. Please review the highlighted fields.')
       } else {
         toast.error(error instanceof Error ? error.message : 'Registration failed.')
