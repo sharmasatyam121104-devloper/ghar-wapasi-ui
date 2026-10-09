@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
+import FilePreview from '../../components/common/FilePreview'
 import { useMe } from '../../data/useMe'
 import type { MeResult } from '../../api/auth'
 
@@ -53,6 +54,7 @@ function StatusContent({ me }: { me: MeResult }) {
   const withinWindow = endsAt > 0 && remaining > 0
   const call = me.verification_call
   const police = me.police ?? {}
+  const documents = [...(police.id_card_files ?? []), ...(police.appointment_proof_files ?? [])]
 
   return (
     <div className="space-y-6">
@@ -166,6 +168,18 @@ function StatusContent({ me }: { me: MeResult }) {
           </p>
         )}
       </div>
+
+      {documents.length > 0 && (
+        <div className="rounded-2xl border border-slate-200/80 bg-surface p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-6">
+          <h3 className="font-display text-lg font-extrabold tracking-tight text-slate-900">Documents you submitted</h3>
+          <p className="mt-1 text-sm leading-6 text-slate-500">Only you and the reviewing admin can open these files.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {documents.map((doc) => (
+              <FilePreview key={doc} path={doc} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

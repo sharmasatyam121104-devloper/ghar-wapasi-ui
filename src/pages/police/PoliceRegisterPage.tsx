@@ -6,6 +6,7 @@ import SearchableSelect from '../../components/common/SearchableSelect'
 import { indianStates, policeRanks } from '../../data/options'
 import { registerPoliceRequest } from '../../api/auth'
 import { ApiError } from '../../api/client'
+import { uploadFiles } from '../../api/files'
 import { establishSession } from '../../data/session'
 
 const steps = [
@@ -17,14 +18,6 @@ const steps = [
 ]
 
 const MAX_PHOTO_BYTES = 2 * 1024 * 1024
-
-const toDataUrl = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result))
-    reader.onerror = () => reject(reader.error ?? new Error('Could not read the photo.'))
-    reader.readAsDataURL(file)
-  })
 
 interface PoliceFormState {
   fullName: string
@@ -150,8 +143,9 @@ function PoliceRegisterPage() {
     const [first, ...rest] = form.fullName.trim().split(/\s+/).filter(Boolean)
     setBusy(true)
     try {
-      const idCardFiles = await Promise.all(idCard.map(toDataUrl))
-      const appointmentFiles = await Promise.all(appointmentProof.map(toDataUrl))
+      const uploaded = await uploadFiles([...idCard, ...appointmentProof])
+      const idCardUploads = uploaded.slice(0, idCard.length).map((file) => file.ref)
+      const appointmentUploads = uploaded.slice(idCard.length).map((file) => file.ref)
       const result = await registerPoliceRequest({
         first_name: first,
         last_name: rest.join(' '),
@@ -170,8 +164,8 @@ function PoliceRegisterPage() {
           joining_date: form.joiningDate,
           reporting_officer: form.reportingOfficer.trim(),
           reporting_officer_contact: form.reportingOfficerContact.trim(),
-          id_card_files: idCardFiles,
-          appointment_proof_files: appointmentFiles,
+          id_card_uploads: idCardUploads,
+          appointment_proof_uploads: appointmentUploads,
         },
       })
       establishSession(result.user, form.mobile)

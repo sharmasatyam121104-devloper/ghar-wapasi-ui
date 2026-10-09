@@ -102,6 +102,32 @@ export async function apiFetch<T>(path: string, init: ApiRequest = {}): Promise<
   return response.data as T
 }
 
+/** Multipart upload; the browser sets the multipart boundary itself. */
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  const response = await http.request({
+    url: path,
+    method: 'POST',
+    data: form,
+    headers: { Accept: 'application/json' },
+  })
+  return response.data as T
+}
+
+/** `<role>/<userId>/<file>` - the only document paths the server serves. */
+const STORED_FILE = /^(public|police|ngo)\/[a-f0-9]{24}\/[A-Za-z0-9._-]+$/i
+
+export const isStoredFileReference = (path: string): boolean => STORED_FILE.test(path)
+
+/**
+ * Turns a stored document path into a URL the browser can open. Seeded
+ * placeholder URLs and inline data URLs are passed through untouched.
+ */
+export const fileUrl = (path: string): string => {
+  if (/^https?:\/\//i.test(path) || path.startsWith('data:')) return path
+  const base = (http.defaults.baseURL ?? '/api').replace(/\/$/, '')
+  return `${base}/files/${path}`
+}
+
 /** Same call, but keeps the envelope `message` (password reset uses it). */
 export async function apiFetchEnvelope<T>(path: string, init: ApiRequest = {}): Promise<ApiEnvelope<T>> {
   const response = await axios.request({
