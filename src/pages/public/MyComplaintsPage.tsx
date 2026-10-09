@@ -1,13 +1,16 @@
 import { Link } from 'react-router-dom'
 import StatusBadge from '../../components/common/StatusBadge'
-import { complaintSteps, doneCountFor, getInitials, matchDeadline, myComplaints } from '../../data/myComplaints'
+import { useComplaints } from '../../data/complaints'
+import { complaintSteps, doneCountFor, getInitials, matchDeadline } from '../../data/myComplaints'
 
 function MyComplaintsPage() {
+  const { complaints, loading, error } = useComplaints()
+
   const counts = {
-    total: myComplaints.length,
-    active: myComplaints.filter((c) => c.status === 'Active').length,
-    matched: myComplaints.filter((c) => c.status === 'Matched').length,
-    resolved: myComplaints.filter((c) => c.status === 'Resolved').length,
+    total: complaints.length,
+    active: complaints.filter((c) => c.status === 'Active').length,
+    matched: complaints.filter((c) => c.status === 'Matched').length,
+    resolved: complaints.filter((c) => c.status === 'Resolved').length,
   }
 
   const summary = [
@@ -37,8 +40,16 @@ function MyComplaintsPage() {
         ))}
       </div>
 
+      {loading && <p className="text-sm font-semibold text-slate-500">Loading your complaints…</p>}
+      {error && <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 dark:border-rose-400/30 dark:bg-rose-950/30 dark:text-rose-300">{error}</p>}
+      {!loading && !error && complaints.length === 0 && (
+        <p className="rounded-2xl border border-dashed border-slate-300 bg-surface p-8 text-center text-sm text-slate-500">
+          You have not raised a complaint yet.
+        </p>
+      )}
+
       <div className="grid gap-5 md:grid-cols-2">
-        {myComplaints.map((complaint) => {
+        {complaints.map((complaint) => {
           const doneCount = doneCountFor(complaint.status)
           const deadlineInfo = complaint.status === 'Matched' && complaint.matchedDaysAgo !== undefined ? matchDeadline(complaint.matchedDaysAgo) : null
           return (

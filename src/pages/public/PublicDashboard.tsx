@@ -1,7 +1,8 @@
 ﻿import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import StatusBadge from '../../components/common/StatusBadge'
-import { complaintSteps, doneCountFor, getInitials, myComplaints } from '../../data/myComplaints'
+import { useComplaints } from '../../data/complaints'
+import { complaintSteps, doneCountFor, getInitials } from '../../data/myComplaints'
 
 interface MissingReport {
   id: number
@@ -34,6 +35,7 @@ const reports: MissingReport[] = [
 
 function PublicDashboard() {
   const notify = (feature: string) => toast.success(`${feature} — Demo only. Full flow coming soon.`)
+  const { complaints, loading, error } = useComplaints()
 
   return (
     <div className="space-y-8">
@@ -98,8 +100,15 @@ function PublicDashboard() {
             <Link to="/public/register-complaint" className="rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-700">Raise a New Complaint</Link>
           </div>
         </div>
+        {loading && <p className="text-sm font-semibold text-slate-500">Loading your complaints…</p>}
+        {error && <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 dark:border-rose-400/30 dark:bg-rose-950/30 dark:text-rose-300">{error}</p>}
+        {!loading && !error && complaints.length === 0 && (
+          <p className="rounded-2xl border border-dashed border-slate-300 bg-surface p-8 text-center text-sm text-slate-500">
+            No complaints yet. <Link to="/public/register-complaint" className="font-bold text-brand-700 dark:text-brand-300">Raise your first complaint.</Link>
+          </p>
+        )}
         <div className="grid gap-5 md:grid-cols-2">
-          {myComplaints.map((complaint) => {
+          {complaints.map((complaint) => {
             const doneCount = doneCountFor(complaint.status)
             return (
               <article key={complaint.id} className="rounded-2xl border border-slate-200/80 bg-surface p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
@@ -166,6 +175,7 @@ function PublicDashboard() {
         </div>
         <div className="grid gap-5 md:grid-cols-2">
           {reports.map((report) => (
+
             <article key={report.id} className="rounded-2xl border border-slate-200/80 bg-surface p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
               <div className="flex items-start gap-4">
                 <span className={`grid h-14 w-14 shrink-0 place-items-center rounded-full ${report.priority === 'high' ? 'bg-amber-100 text-amber-700' : 'bg-brand-100 text-brand-700 dark:text-brand-300'}`}>
